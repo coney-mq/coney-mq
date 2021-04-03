@@ -1,0 +1,11 @@
+/target
+**/*.rs.bk
+**/*.pyc
+
+.env
+
+*~
+*.swp
+
+/**/target/
+

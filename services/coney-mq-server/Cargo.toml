@@ -1,0 +1,11 @@
+[package]
+name = "coney-mq-server"
+version = "0.1.0"
+authors = ["Roman Gafiyatullin <r_hafiyatulin@wargaming.net>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+common = { package = "coney-common", path = "../../libs/coney-common", version = "^0.1" }
+amqp-0-9-1 = { package = "coney-amqp-0-9-1", path = "../../libs/coney-amqp-0-9-1", version = "^0.1" }
