@@ -1,4 +1,6 @@
 [workspace]
 members = [
-    "services/coney-mq-server"
+    "services/coney-mq-server",
+    
+    "examples"
 ]
