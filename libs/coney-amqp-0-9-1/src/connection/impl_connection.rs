@@ -1,6 +1,12 @@
 use super::*;
 
+use ::amq_protocol::frame::AMQPFrame;
+use ::futures::channel::mpsc;
+use ::futures::prelude::*;
+
 use ::common::ErrorReport;
+
+use crate::amqp_exception::Props;
 
 use handshake::HandshakeError;
 
@@ -30,9 +36,25 @@ where
             Ok(state) => state,
         };
 
-        log::error!("not implemented: {:#?}", state);
+        log::trace!("connection initialized: {:#?}", state);
 
-        unimplemented!()
+        let (send_queue_tx, mut send_queue_rx) =
+            mpsc::channel::<AMQPFrame>(self.backend.amqp_config().send_queue_buf_size());
+
+        loop {
+            ::futures::select! {
+                outbound_frame = send_queue_rx.next().fuse() => {
+                    let outbound_frame = outbound_frame.ok_or(ConnectionError::ISE(ISE::SendQueueEndOfStream))?;
+                    let () = self.framing.send(outbound_frame).await.map_err(Into::into).map_err(ConnectionError::IO)?;
+                },
+                inbound_frame = self.framing.recv().fuse() => {
+                    let inbound_frame = inbound_frame.map_err(Into::into).map_err(ConnectionError::IO)?.ok_or(ConnectionError::PeerGone)?;
+                    let props = Props::from(&inbound_frame);
+
+                    log::warn!("Unhandled frame: [{:?}] {:#?}", props, inbound_frame);
+                }
+            }
+        }
     }
 }
 
@@ -43,7 +65,6 @@ async fn process_handshake_error<S>(
 where
     S: IoStream,
 {
-    use ::amq_protocol::frame::AMQPFrame;
     use ::amq_protocol::protocol::connection::AMQPMethod as AmqpMethodConn;
     use ::amq_protocol::protocol::AMQPClass;
 

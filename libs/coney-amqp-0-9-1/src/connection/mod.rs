@@ -13,6 +13,7 @@ use state::State;
 
 mod error;
 pub use error::ConnectionError;
+pub use error::ISE;
 
 mod handshake;
 mod impl_connection;

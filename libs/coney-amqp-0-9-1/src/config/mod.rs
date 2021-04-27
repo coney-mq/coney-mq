@@ -3,4 +3,6 @@ pub use connection_limits::ConnectionLimits;
 
 pub trait AmqpConfig: Send + Sync + 'static {
     fn connection_limits(&self) -> &dyn ConnectionLimits;
+
+    fn send_queue_buf_size(&self) -> usize;
 }

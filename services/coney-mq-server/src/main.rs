@@ -81,6 +81,9 @@ impl AmqpConfig for BE {
     fn connection_limits(&self) -> &dyn ConnectionLimits {
         self
     }
+    fn send_queue_buf_size(&self) -> usize {
+        64
+    }
 }
 impl ConnectionLimits for BE {
     fn max_channels(&self) -> u16 {
