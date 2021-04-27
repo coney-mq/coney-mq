@@ -9,10 +9,12 @@ mod connection_start;
 mod connection_tune;
 mod receive_protocol_header;
 
+pub use connection_tune::Tuning;
+
 pub async fn run<S>(
     framing: &mut AmqpFraming<S>,
     backend: &dyn Backend,
-) -> Result<(), ConnectionError>
+) -> Result<State, ConnectionError>
 where
     S: IoStream,
 {
@@ -25,9 +27,13 @@ where
     log::trace!("tuning: {:?}", tuning);
     let (vhost_name, vhost_api) = connection_open::run(framing, backend).await?;
 
-    
+    let state = State {
+        protocol_version,
+        identity,
+        tuning,
+        vhost_name,
+        vhost_api,
+    };
 
-    log::error!("handshake unimplemented!");
-
-    unimplemented!()
+    Ok(state)
 }

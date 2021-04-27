@@ -6,6 +6,9 @@ use crate::amqp_framing::AmqpFraming;
 use crate::amqp_framing::IoStream;
 use crate::backend::Backend;
 
+mod state;
+use state::State;
+
 mod error;
 pub use error::ConnectionError;
 

@@ -19,7 +19,10 @@ where
     S: IoStream,
 {
     pub async fn run(mut self) -> Result<(), ConnectionError> {
-        let _state = handshake::run(&mut self.framing, self.backend.as_ref()).await?;
+        let state = handshake::run(&mut self.framing, self.backend.as_ref()).await?;
+
+        log::error!("not implemented: {:?}", state);
+    
         unimplemented!()
     }
 }
