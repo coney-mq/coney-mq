@@ -1,9 +1,12 @@
 use super::*;
 
+use crate::amqp_exception::Condition;
+use crate::amqp_exception::Props;
+
 #[derive(Debug, ::thiserror::Error)]
 pub enum HandshakeError {
-    #[error("HandshakeError::ExpectedControlChannel [ch-id: {}]", channel_id)]
-    ExpectedControlChannel { channel_id: u16 },
+    #[error("HandshakeError::ExpectedControlChannel [ch-id: {}]", props.channel_id)]
+    ExpectedControlChannel { props: Props },
 
     #[error("HandshakeError::RecvError")]
     RecvError(#[source] util::RecvError),
@@ -11,10 +14,10 @@ pub enum HandshakeError {
     #[error("HandshakeERror::SendError")]
     SendError(#[source] AnyError),
 
-    #[error("HandshakeError::UnexpectedFrame [exp: {}, act: {}]", expected, actual)]
+    #[error("HandshakeError::UnexpectedFrame [expected: {}]", expected)]
     UnexpectedFrame {
         expected: &'static str,
-        actual: String,
+        props: Props,
     },
 
     #[error("HandshakeError::UnsupportedProtocolVersion: {}", version)]
@@ -37,7 +40,11 @@ pub enum HandshakeError {
     NoSuchVHost(String),
 
     #[error("HandshakeError::ISE")]
-    ISE(#[source] AnyError),
+    ISE {
+        props: Props,
+        #[source]
+        source: AnyError,
+    },
 }
 
 impl From<util::RecvError> for HandshakeError {
@@ -48,5 +55,61 @@ impl From<util::RecvError> for HandshakeError {
 impl From<::authc::AuthcFailure> for HandshakeError {
     fn from(v: ::authc::AuthcFailure) -> Self {
         Self::AuthcMechError(v)
+    }
+}
+
+impl HandshakeError {
+    pub fn into_amqp_exception(self) -> Result<AmqpException, ConnectionError> {
+        let amqp_exception = match self {
+            Self::ExpectedControlChannel { props, .. } => {
+                AmqpException::new("expected control channel")
+                    .with_condition(Condition::ChannelError)
+                    .with_props(props)
+                    .with_source(self)
+            }
+            Self::UnexpectedFrame { props, .. } => AmqpException::new("invalid command")
+                .with_condition(Condition::CommandInvalid)
+                .with_props(props)
+                .with_source(self),
+            Self::AuthcTooManyChallenges { .. } => {
+                AmqpException::new("too many authentication challenge attempts")
+                    .with_condition(Condition::NotAllowed)
+                    .with_props(make_props(CID_CONN, MID_CONN_SECURE_OK))
+                    .with_source(self)
+            }
+            Self::AuthcMechError { .. } => AmqpException::new("authentication failure")
+                .with_condition(Condition::NotAllowed)
+                .with_props(make_props(CID_CONN, MID_CONN_SECURE_OK))
+                .with_source(self),
+            Self::TuneNegotiationError { .. } => AmqpException::new("Tune negotiation error")
+                .with_condition(Condition::ResourceError)
+                .with_props(make_props(CID_CONN, MID_CONN_TUNE))
+                .with_source(self),
+
+            Self::NoSuchVHost { .. } => AmqpException::new("Virtual host does not exist")
+                .with_condition(Condition::InvalidPath)
+                .with_props(make_props(CID_CONN, MID_CONN_OPEN))
+                .with_source(self),
+
+            Self::ISE { props, .. } => AmqpException::new("Internal Error")
+                .with_condition(Condition::InternalError)
+                .with_source(self),
+
+            _ => return Err(ConnectionError::HandshakeError(self)),
+        };
+        Ok(amqp_exception)
+    }
+}
+
+const CID_CONN: u16 = 10;
+const MID_CONN_SECURE_OK: u16 = 21;
+const MID_CONN_TUNE: u16 = 30;
+const MID_CONN_OPEN: u16 = 40;
+
+fn make_props(class_id: u16, method_id: u16) -> Props {
+    Props {
+        channel_id: CTL_CHANNEL_ID,
+        class_id,
+        method_id,
     }
 }

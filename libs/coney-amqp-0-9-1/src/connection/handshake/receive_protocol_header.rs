@@ -20,7 +20,7 @@ where
         AMQPFrame::ProtocolHeader(protocol_version) => check_protocol_version(protocol_version),
         unexpected => Err(HandshakeError::UnexpectedFrame {
             expected: "ProtocolHeader",
-            actual: format!("{}", unexpected),
+            props: Default::default(),
         }),
     }
 }

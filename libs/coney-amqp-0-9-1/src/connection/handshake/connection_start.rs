@@ -68,7 +68,7 @@ where
         }
         unexpected => Err(HandshakeError::UnexpectedFrame {
             expected: "Method.Connection/Start-Ok",
-            actual: format!("{}", unexpected),
+            props: From::from(&unexpected),
         }),
     }
 }
@@ -85,7 +85,11 @@ where
     use ::authc::AuthcFailure;
     use ::authc::ProcedureReply;
 
-    let () = expect_control_channel(channel_id)?;
+    let () = expect_control_channel(
+        channel_id,
+        start_ok.get_amqp_class_id(),
+        start_ok.get_amqp_method_id(),
+    )?;
     let mech_name = start_ok.mechanism.as_str();
     let mut procedure = authc
         .select_mech(mech_name)
@@ -122,14 +126,18 @@ where
                         channel_id,
                         AMQPClass::Connection(AMQPMethod::SecureOk(secure_ok)),
                     ) => {
-                        let () = expect_control_channel(channel_id)?;
+                        let () = expect_control_channel(
+                            channel_id,
+                            secure_ok.get_amqp_class_id(),
+                            secure_ok.get_amqp_method_id(),
+                        )?;
                         response = secure_ok.response.as_str().to_owned();
                         continue;
                     }
                     unexpected => {
                         return Err(HandshakeError::UnexpectedFrame {
                             expected: "Method.Connection/Secure-Ok",
-                            actual: format!("{}", unexpected),
+                            props: From::from(&unexpected),
                         })
                     }
                 }
@@ -138,13 +146,4 @@ where
     }
 
     Err(HandshakeError::AuthcTooManyChallenges)
-}
-
-#[derive(Debug, ::thiserror::Error)]
-pub enum AuthcError {
-    #[error("AuthcError::AuthcTooManyChallenges")]
-    AuthcTooManyChallenges,
-
-    #[error("AuthcError::MechError")]
-    MechError(#[source] ::authc::AuthcFailure),
 }

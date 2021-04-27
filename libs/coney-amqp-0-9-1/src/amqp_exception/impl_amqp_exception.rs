@@ -18,6 +18,12 @@ impl AmqpException {
             ..self
         }
     }
+    pub fn with_props(self, props: Props) -> Self {
+        Self { props, ..self }
+    }
+    pub fn with_condition(self, condition: Condition) -> Self {
+        Self { condition, ..self }
+    }
 
     pub fn message(&self) -> &str {
         &self.message

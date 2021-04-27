@@ -61,7 +61,11 @@ where
 
     match frame {
         AMQPFrame::Method(channel_id, AMQPClass::Connection(AMQPMethod::TuneOk(tune_ok))) => {
-            let () = expect_control_channel(channel_id)?;
+            let () = expect_control_channel(
+                channel_id,
+                tune_ok.get_amqp_class_id(),
+                tune_ok.get_amqp_method_id(),
+            )?;
 
             Ok(Tuning {
                 max_channels: expect_within_the_limit(
@@ -83,7 +87,7 @@ where
         }
         unexpected => Err(HandshakeError::UnexpectedFrame {
             expected: "Method.Connection/Tune-Ok",
-            actual: format!("{}", unexpected),
+            props: From::from(&unexpected),
         })?,
     }
 }

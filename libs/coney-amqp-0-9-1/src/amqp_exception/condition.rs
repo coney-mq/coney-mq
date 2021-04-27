@@ -3,7 +3,9 @@ pub enum Condition {
     #[error("CONNECTION_FORCED")]
     ConnectionForced,
 
-    // InvalidPath,
+    #[error("INVALID_PATH")]
+    InvalidPath,
+
     #[error("FRAME_ERROR")]
     FrameError,
 
@@ -11,13 +13,18 @@ pub enum Condition {
     #[error("COMMAND_INVALID")]
     CommandInvalid,
 
-    // ChannelError,
+    #[error("CHANNEL_ERROR")]
+    ChannelError,
+
     #[error("UNEXPECTED_FRAME")]
     UnexpectedFrame,
 
-    // ResourceError,
+    #[error("RESOURCE_ERROR")]
+    ResourceError,
 
-    // NotAllowed,
+    #[error("NOT_ALLOWED")]
+    NotAllowed,
+
     #[error("NOT_IMPLEMENTED")]
     NotImplemented,
 
@@ -56,9 +63,13 @@ impl Condition {
     pub fn id(&self) -> u16 {
         match self {
             Self::ConnectionForced => 320,
+            Self::InvalidPath => 402,
             Self::FrameError => 501,
             Self::CommandInvalid => 503,
+            Self::ChannelError => 504,
             Self::UnexpectedFrame => 505,
+            Self::ResourceError => 506,
+            Self::NotAllowed => 530,
             Self::NotImplemented => 540,
             Self::InternalError => 541,
 
@@ -75,9 +86,13 @@ impl Condition {
     pub fn is_hard(&self) -> bool {
         match self {
             Self::ConnectionForced => true,
+            Self::InvalidPath => true,
             Self::FrameError => true,
             Self::CommandInvalid => true,
+            Self::ChannelError => true,
             Self::UnexpectedFrame => true,
+            Self::ResourceError => true,
+            Self::NotAllowed => true,
             Self::NotImplemented => true,
             Self::InternalError => true,
 

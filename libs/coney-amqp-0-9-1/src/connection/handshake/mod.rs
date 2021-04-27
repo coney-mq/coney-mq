@@ -3,6 +3,7 @@ use super::*;
 use ::amq_protocol::frame::AMQPFrame;
 use ::amq_protocol::frame::ProtocolVersion;
 
+use crate::amqp_exception::Props;
 use crate::amqp_framing::AmqpFraming;
 
 mod error;
@@ -44,9 +45,19 @@ where
 
 pub const CTL_CHANNEL_ID: u16 = 0;
 
-fn expect_control_channel(channel_id: u16) -> Result<(), HandshakeError> {
+fn expect_control_channel(
+    channel_id: u16,
+    class_id: u16,
+    method_id: u16,
+) -> Result<(), HandshakeError> {
     if channel_id != CTL_CHANNEL_ID {
-        return Err(HandshakeError::ExpectedControlChannel { channel_id });
+        return Err(HandshakeError::ExpectedControlChannel {
+            props: Props {
+                channel_id,
+                class_id,
+                method_id,
+            },
+        });
     } else {
         Ok(())
     }

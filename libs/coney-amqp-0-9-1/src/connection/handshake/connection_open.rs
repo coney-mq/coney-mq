@@ -31,13 +31,24 @@ where
 
     match frame {
         AMQPFrame::Method(channel_id, AMQPClass::Connection(AMQPMethod::Open(open))) => {
-            let () = expect_control_channel(channel_id)?;
+            let () = expect_control_channel(
+                channel_id,
+                open.get_amqp_class_id(),
+                open.get_amqp_method_id(),
+            )?;
 
             let vhost_name = open.virtual_host.as_str();
             let vhost_api = backend
                 .vhost_select(vhost_name)
                 .await
-                .map_err(HandshakeError::ISE)?
+                .map_err(|source| HandshakeError::ISE {
+                    props: Props {
+                        channel_id,
+                        class_id: open.get_amqp_class_id(),
+                        method_id: open.get_amqp_method_id(),
+                    },
+                    source,
+                })?
                 .ok_or_else(|| HandshakeError::NoSuchVHost(vhost_name.to_owned()))?;
 
             let vhost_name = vhost_name.to_owned();
@@ -59,7 +70,7 @@ where
         unexpected => {
             return Err(HandshakeError::UnexpectedFrame {
                 expected: "Method.Connection/Open",
-                actual: format!("{}", unexpected),
+                props: From::from(&unexpected),
             })
         }
     }
