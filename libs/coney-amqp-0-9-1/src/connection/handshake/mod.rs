@@ -23,7 +23,9 @@ where
     log::trace!("identity: {:?}", identity);
     let tuning = connection_tune::run(framing, backend.amqp_config().connection_limits()).await?;
     log::trace!("tuning: {:?}", tuning);
-    let _ = connection_open::run(framing).await?;
+    let (vhost_name, vhost_api) = connection_open::run(framing, backend).await?;
+
+    
 
     log::error!("handshake unimplemented!");
 

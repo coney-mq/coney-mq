@@ -7,6 +7,7 @@ use ::amqp_0_9_1::config::ConnectionLimits;
 use ::authc::Authc;
 use ::authc::AuthcWithMechs;
 use ::common::ErrorReport;
+use ::mq::vhost::VHost;
 
 use ::futures::prelude::*;
 
@@ -84,11 +85,16 @@ impl ConnectionLimits for BE {
         300
     }
 }
+#[async_trait::async_trait]
 impl Backend for BE {
     fn amqp_config(&self) -> &dyn AmqpConfig {
         self
     }
     fn authc(&self) -> &dyn Authc {
         &self.authc
+    }
+
+    async fn vhost_select(&self, _vhost_name: &str) -> Result<Option<Arc<dyn VHost>>, AnyError> {
+        Ok(None)
     }
 }

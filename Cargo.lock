@@ -165,6 +165,7 @@ dependencies = [
  "bytes 1.0.1",
  "coney-authc",
  "coney-common",
+ "coney-mq",
  "futures",
  "log",
  "nom",
@@ -205,11 +206,15 @@ dependencies = [
 [[package]]
 name = "coney-mq"
 version = "0.1.0"
+dependencies = [
+ "async-trait",
+]
 
 [[package]]
 name = "coney-mq-server"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "coney-amqp-0-9-1",
  "coney-authc",
  "coney-authc-plain-const-creds",

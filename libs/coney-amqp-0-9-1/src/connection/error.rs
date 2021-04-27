@@ -23,15 +23,21 @@ pub enum ConnectionError {
     #[error("ConnectionError::Authc")]
     Authc(#[source] AuthcFailure),
 
-    #[error("ProtocolError::AuthcTooManyChallenges")]
+    #[error("ConnectionError::AuthcTooManyChallenges")]
     AuthcTooManyChallenges,
 
-    #[error("ProtocolError::TuneNegotiationFailure: [ field: {field:?}, max: {max}, requested: {requested} ]")]
+    #[error("ConnectionError::TuneNegotiationFailure: [ field: {field:?}, max: {max}, requested: {requested} ]")]
     TuneNegotiationFailure {
         field: String,
         max: u32,
         requested: u32,
     },
+
+    #[error("ConnectionError::ISE")]
+    ISE(#[source] AnyError),
+
+    #[error("ConnectionError::NoSuchVHost: {}", _0)]
+    NoSuchVHost(String),
 }
 
 impl ConnectionError {
