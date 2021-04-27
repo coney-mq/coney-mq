@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
 use ::authc::Authc;
+use ::common::AnyError;
 
+use crate::amqp_exception::AmqpException;
 use crate::amqp_framing::AmqpFraming;
 use crate::amqp_framing::IoStream;
 use crate::backend::Backend;

@@ -23,7 +23,7 @@ use ::mq::vhost::VHost;
 pub async fn run<S>(
     framing: &mut AmqpFraming<S>,
     backend: &dyn Backend,
-) -> Result<(String, Arc<dyn VHost>), ConnectionError>
+) -> Result<(String, Arc<dyn VHost>), HandshakeError>
 where
     S: IoStream,
 {
@@ -31,14 +31,14 @@ where
 
     match frame {
         AMQPFrame::Method(channel_id, AMQPClass::Connection(AMQPMethod::Open(open))) => {
-            let () = util::expect_control_channel(channel_id)?;
+            let () = expect_control_channel(channel_id)?;
 
             let vhost_name = open.virtual_host.as_str();
             let vhost_api = backend
                 .vhost_select(vhost_name)
                 .await
-                .map_err(ConnectionError::ISE)?
-                .ok_or_else(|| ConnectionError::NoSuchVHost(vhost_name.to_owned()))?;
+                .map_err(HandshakeError::ISE)?
+                .ok_or_else(|| HandshakeError::NoSuchVHost(vhost_name.to_owned()))?;
 
             let vhost_name = vhost_name.to_owned();
 
@@ -51,16 +51,16 @@ where
                 .send(frame)
                 .await
                 .map_err(Into::into)
-                .map_err(ConnectionError::IO)?;
+                .map_err(HandshakeError::SendError)?;
 
             Ok((vhost_name, vhost_api))
         }
 
         unexpected => {
-            return Err(ConnectionError::unexpected_frame(
-                "Method.Connection/Open",
-                &format!("{}", unexpected),
-            ))
+            return Err(HandshakeError::UnexpectedFrame {
+                expected: "Method.Connection/Open",
+                actual: format!("{}", unexpected),
+            })
         }
     }
 }

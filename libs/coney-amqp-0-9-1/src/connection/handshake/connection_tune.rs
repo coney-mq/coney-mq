@@ -34,7 +34,7 @@ pub struct Tuning {
 pub async fn run<S>(
     framing: &mut AmqpFraming<S>,
     conn_limits: &dyn ConnectionLimits,
-) -> Result<Tuning, ConnectionError>
+) -> Result<Tuning, HandshakeError>
 where
     S: IoStream,
 {
@@ -49,19 +49,19 @@ where
     };
     let method = AMQPMethod::Tune(tune);
     let class = AMQPClass::Connection(method);
-    let frame = AMQPFrame::Method(util::CTL_CHANNEL_ID, class);
+    let frame = AMQPFrame::Method(CTL_CHANNEL_ID, class);
 
     let () = framing
         .send(frame)
         .await
         .map_err(Into::into)
-        .map_err(ConnectionError::IO)?;
+        .map_err(HandshakeError::SendError)?;
 
     let frame = util::receive_frame(framing).await?;
 
     match frame {
         AMQPFrame::Method(channel_id, AMQPClass::Connection(AMQPMethod::TuneOk(tune_ok))) => {
-            let () = util::expect_control_channel(channel_id)?;
+            let () = expect_control_channel(channel_id)?;
 
             Ok(Tuning {
                 max_channels: expect_within_the_limit(
@@ -81,23 +81,27 @@ where
                 )?,
             })
         }
-        unexpected => Err(ConnectionError::unexpected_frame(
-            "Method.Connection/Tune-Ok",
-            &format!("{}", unexpected),
-        ))?,
+        unexpected => Err(HandshakeError::UnexpectedFrame {
+            expected: "Method.Connection/Tune-Ok",
+            actual: format!("{}", unexpected),
+        })?,
     }
 }
 
-fn expect_within_the_limit<V>(field: &str, max: V, requested: V) -> Result<V, ConnectionError>
+fn expect_within_the_limit<V>(
+    field: &'static str,
+    max: V,
+    requested: V,
+) -> Result<V, HandshakeError>
 where
     V: ToU32,
 {
     if requested > max {
-        Err(ConnectionError::tune_negotiation_failure(
+        Err(HandshakeError::TuneNegotiationError {
             field,
-            max.to_u32(),
-            requested.to_u32(),
-        ))
+            max: max.to_u32(),
+            requested: requested.to_u32(),
+        })
     } else {
         Ok(requested)
     }

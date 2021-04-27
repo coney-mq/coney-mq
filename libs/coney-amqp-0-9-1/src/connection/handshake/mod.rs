@@ -1,8 +1,12 @@
 use super::*;
 
 use ::amq_protocol::frame::AMQPFrame;
+use ::amq_protocol::frame::ProtocolVersion;
 
 use crate::amqp_framing::AmqpFraming;
+
+mod error;
+pub use error::HandshakeError;
 
 mod connection_open;
 mod connection_start;
@@ -14,7 +18,7 @@ pub use connection_tune::Tuning;
 pub async fn run<S>(
     framing: &mut AmqpFraming<S>,
     backend: &dyn Backend,
-) -> Result<State, ConnectionError>
+) -> Result<State, HandshakeError>
 where
     S: IoStream,
 {
@@ -36,4 +40,14 @@ where
     };
 
     Ok(state)
+}
+
+pub const CTL_CHANNEL_ID: u16 = 0;
+
+fn expect_control_channel(channel_id: u16) -> Result<(), HandshakeError> {
+    if channel_id != CTL_CHANNEL_ID {
+        return Err(HandshakeError::ExpectedControlChannel { channel_id });
+    } else {
+        Ok(())
+    }
 }

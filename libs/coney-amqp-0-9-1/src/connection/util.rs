@@ -2,17 +2,16 @@ use super::*;
 
 use ::amq_protocol::frame::AMQPFrame;
 
-pub const CTL_CHANNEL_ID: u16 = 0;
+#[derive(Debug, ::thiserror::Error)]
+pub enum RecvError {
+    #[error("RecvError::PeerGone")]
+    PeerGone,
 
-pub fn expect_control_channel(channel_id: u16) -> Result<(), ConnectionError> {
-    if channel_id != CTL_CHANNEL_ID {
-        return Err(ConnectionError::NoChannel(channel_id));
-    } else {
-        Ok(())
-    }
+    #[error("RecvError::IO")]
+    IO(#[source] AnyError),
 }
 
-pub async fn receive_frame<S>(framing: &mut AmqpFraming<S>) -> Result<AMQPFrame, ConnectionError>
+pub async fn receive_frame<S>(framing: &mut AmqpFraming<S>) -> Result<AMQPFrame, RecvError>
 where
     S: IoStream,
 {
@@ -20,8 +19,8 @@ where
         .recv()
         .await
         .map_err(Into::into)
-        .map_err(ConnectionError::IO)?
-        .ok_or_else(|| ConnectionError::PeerGone)?;
+        .map_err(RecvError::IO)?
+        .ok_or(RecvError::PeerGone)?;
 
     Ok(frame)
 }

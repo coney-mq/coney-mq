@@ -40,7 +40,7 @@ const MAX_CHALLENGES_COUNT: usize = 10;
 pub async fn run<S>(
     framing: &mut AmqpFraming<S>,
     authc: &dyn Authc,
-) -> Result<String, ConnectionError>
+) -> Result<String, HandshakeError>
 where
     S: IoStream,
 {
@@ -53,12 +53,12 @@ where
     };
     let method = AMQPMethod::Start(start);
     let class = AMQPClass::Connection(method);
-    let frame = AMQPFrame::Method(util::CTL_CHANNEL_ID, class);
+    let frame = AMQPFrame::Method(CTL_CHANNEL_ID, class);
     let () = framing
         .send(frame)
         .await
         .map_err(Into::into)
-        .map_err(ConnectionError::IO)?;
+        .map_err(HandshakeError::SendError)?;
 
     let frame = util::receive_frame(framing).await?;
 
@@ -66,11 +66,10 @@ where
         AMQPFrame::Method(channel_id, AMQPClass::Connection(AMQPMethod::StartOk(start_ok))) => {
             process_start_ok(framing, authc, channel_id, start_ok).await
         }
-        unexpected => Err(ConnectionError::unexpected_frame(
-            "Method.Connection/Start-Ok",
-            &format!("{}", unexpected),
-        )
-        .into()),
+        unexpected => Err(HandshakeError::UnexpectedFrame {
+            expected: "Method.Connection/Start-Ok",
+            actual: format!("{}", unexpected),
+        }),
     }
 }
 
@@ -79,33 +78,26 @@ async fn process_start_ok<S>(
     authc: &dyn Authc,
     channel_id: u16,
     start_ok: StartOk,
-) -> Result<String, ConnectionError>
+) -> Result<String, HandshakeError>
 where
     S: IoStream,
 {
     use ::authc::AuthcFailure;
     use ::authc::ProcedureReply;
 
-    let () = util::expect_control_channel(channel_id)?;
+    let () = expect_control_channel(channel_id)?;
     let mech_name = start_ok.mechanism.as_str();
     let mut procedure = authc
         .select_mech(mech_name)
         .ok_or(AuthcFailure::unsupported_mechanism(
             start_ok.mechanism.as_str(),
-        ))
-        .map_err(ConnectionError::Authc)?;
+        ))?;
 
     let mut response = start_ok.response.as_str().to_owned();
 
     for _ in 0..MAX_CHALLENGES_COUNT {
-        match procedure
-            .response(&response)
-            .await
-            .map_err(ConnectionError::Authc)?
-        {
-            ProcedureReply::Failure => {
-                return Err(ConnectionError::Authc(AuthcFailure::invalid_creds()).into())
-            }
+        match procedure.response(&response).await? {
+            ProcedureReply::Failure => Err(AuthcFailure::invalid_creds())?,
             ProcedureReply::Success(identity) => {
                 return Ok(identity);
             }
@@ -115,13 +107,13 @@ where
                 };
                 let method = AMQPMethod::Secure(secure);
                 let class = AMQPClass::Connection(method);
-                let frame = AMQPFrame::Method(util::CTL_CHANNEL_ID, class);
+                let frame = AMQPFrame::Method(CTL_CHANNEL_ID, class);
 
                 let () = framing
                     .send(frame)
                     .await
                     .map_err(Into::into)
-                    .map_err(ConnectionError::IO)?;
+                    .map_err(HandshakeError::SendError)?;
 
                 let frame = util::receive_frame(framing).await?;
 
@@ -130,21 +122,29 @@ where
                         channel_id,
                         AMQPClass::Connection(AMQPMethod::SecureOk(secure_ok)),
                     ) => {
-                        let () = util::expect_control_channel(channel_id)?;
+                        let () = expect_control_channel(channel_id)?;
                         response = secure_ok.response.as_str().to_owned();
                         continue;
                     }
                     unexpected => {
-                        return Err(ConnectionError::unexpected_frame(
-                            "Method.Connection/Secure-Ok",
-                            &format!("{}", unexpected),
-                        )
-                        .into())
+                        return Err(HandshakeError::UnexpectedFrame {
+                            expected: "Method.Connection/Secure-Ok",
+                            actual: format!("{}", unexpected),
+                        })
                     }
                 }
             }
         }
     }
 
-    Err(ConnectionError::AuthcTooManyChallenges)
+    Err(HandshakeError::AuthcTooManyChallenges)
+}
+
+#[derive(Debug, ::thiserror::Error)]
+pub enum AuthcError {
+    #[error("AuthcError::AuthcTooManyChallenges")]
+    AuthcTooManyChallenges,
+
+    #[error("AuthcError::MechError")]
+    MechError(#[source] ::authc::AuthcFailure),
 }

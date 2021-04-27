@@ -1,7 +1,5 @@
 use super::*;
 
-use ::amq_protocol::frame::ProtocolVersion;
-
 /*
     On the wire:
         * Receive AMQP-Protocol-Header from the client.
@@ -12,7 +10,7 @@ use ::amq_protocol::frame::ProtocolVersion;
 
 /// Perform the phase of AMQP-Protocol-Header
 /// On success returns the `ProtocolVersion` chosen by the client.
-pub async fn run<S>(framing: &mut AmqpFraming<S>) -> Result<ProtocolVersion, ConnectionError>
+pub async fn run<S>(framing: &mut AmqpFraming<S>) -> Result<ProtocolVersion, HandshakeError>
 where
     S: IoStream,
 {
@@ -20,17 +18,17 @@ where
 
     match frame {
         AMQPFrame::ProtocolHeader(protocol_version) => check_protocol_version(protocol_version),
-        unexpected => Err(ConnectionError::unexpected_frame(
-            "ProtocolHeader",
-            &format!("{}", unexpected),
-        )),
+        unexpected => Err(HandshakeError::UnexpectedFrame {
+            expected: "ProtocolHeader",
+            actual: format!("{}", unexpected),
+        }),
     }
 }
 
-fn check_protocol_version(pv: ProtocolVersion) -> Result<ProtocolVersion, ConnectionError> {
+fn check_protocol_version(pv: ProtocolVersion) -> Result<ProtocolVersion, HandshakeError> {
     match (pv.major, pv.minor, pv.revision) {
         (0, 9, rev) if rev >= 1 => Ok(pv),
 
-        _unsupported => Err(ConnectionError::UnsupportedProtocolVersion(pv)),
+        _unsupported => Err(HandshakeError::UnsupportedProtocolVersion { version: pv }),
     }
 }
