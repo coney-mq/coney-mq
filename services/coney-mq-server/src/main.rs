@@ -1,5 +1,5 @@
-use std::net::SocketAddr;
 use std::sync::Arc;
+use std::{collections::HashMap, net::SocketAddr};
 
 use ::amqp_0_9_1::backend::Backend;
 use ::amqp_0_9_1::config::AmqpConfig;
@@ -40,13 +40,20 @@ async fn run() -> Result<(), AnyError> {
     let tcp_listener_running = tcp_listener.run().map_err(AnyError::from);
 
     let backend = {
+        let vhosts = vec![("", VH {})]
+            .into_iter()
+            .map(|(k, v)| {
+                let dyn_vh: Arc<dyn VHost> = Arc::new(v);
+                (k.to_owned(), dyn_vh)
+            })
+            .collect();
         let authc = AuthcWithMechs::create().with_mech(
             ::authc_plain_const_creds::AuthcMechPlainConstCreds::new(vec![
                 ("guest", "guest", "guest"),
                 ("admin", "admin", "admin"),
             ]),
         );
-        Arc::new(BE { authc })
+        Arc::new(BE { authc, vhosts })
     };
 
     let tcp_inbound_spawned = async move {
@@ -68,6 +75,7 @@ async fn run() -> Result<(), AnyError> {
 
 struct BE {
     authc: AuthcWithMechs,
+    vhosts: HashMap<String, Arc<dyn VHost>>,
 }
 impl AmqpConfig for BE {
     fn connection_limits(&self) -> &dyn ConnectionLimits {
@@ -94,7 +102,13 @@ impl Backend for BE {
         &self.authc
     }
 
-    async fn vhost_select(&self, _vhost_name: &str) -> Result<Option<Arc<dyn VHost>>, AnyError> {
-        Ok(None)
+    async fn vhost_select(&self, vhost_name: &str) -> Result<Option<Arc<dyn VHost>>, AnyError> {
+        Ok(self.vhosts.get(vhost_name).cloned())
     }
 }
+
+#[derive(Debug)]
+struct VH {}
+
+#[async_trait::async_trait]
+impl VHost for VH {}

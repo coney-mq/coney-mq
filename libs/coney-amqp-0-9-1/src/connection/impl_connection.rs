@@ -30,7 +30,7 @@ where
             Ok(state) => state,
         };
 
-        log::error!("not implemented: {:?}", state);
+        log::error!("not implemented: {:#?}", state);
 
         unimplemented!()
     }

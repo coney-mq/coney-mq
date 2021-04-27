@@ -5,6 +5,7 @@ use ::amq_protocol::frame::ProtocolVersion;
 
 use crate::amqp_exception::Props;
 use crate::amqp_framing::AmqpFraming;
+use crate::channels::Channel;
 
 mod error;
 pub use error::HandshakeError;
@@ -32,12 +33,24 @@ where
     log::trace!("tuning: {:?}", tuning);
     let (vhost_name, vhost_api) = connection_open::run(framing, backend).await?;
 
+    let channels = {
+        let mut channels = Vec::with_capacity(tuning.max_channels as usize);
+        let () = channels.push(Channel::create_control_channel());
+
+        for _chan_id in 1..tuning.max_channels {
+            let () = channels.push(Channel::create_regular_channel());
+        }
+
+        channels
+    };
+
     let state = State {
         protocol_version,
         identity,
         tuning,
         vhost_name,
         vhost_api,
+        channels,
     };
 
     Ok(state)
