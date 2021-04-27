@@ -18,6 +18,5 @@ pub async fn run<S>(framing: &mut AmqpFraming<S>) -> Result<(), ConnectionError>
 where
     S: IoStream,
 {
-    
     unimplemented!()
 }

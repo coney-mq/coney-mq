@@ -9,16 +9,8 @@ impl<S> std::fmt::Debug for AmqpConnection<S> {
 }
 
 impl<S> AmqpConnection<S> {
-    pub fn new(
-        framing: AmqpFraming<S>,
-        authc: Arc<dyn Authc>,
-        config: Arc<dyn AmqpConfig>,
-    ) -> Self {
-        Self {
-            framing,
-            authc,
-            config,
-        }
+    pub fn new(framing: AmqpFraming<S>, backend: Arc<dyn Backend>) -> Self {
+        Self { framing, backend }
     }
 }
 
@@ -27,8 +19,7 @@ where
     S: IoStream,
 {
     pub async fn run(mut self) -> Result<(), ConnectionError> {
-        let _state =
-            handshake::run(&mut self.framing, self.authc.as_ref(), self.config.as_ref()).await?;
+        let _state = handshake::run(&mut self.framing, self.backend.as_ref()).await?;
         unimplemented!()
     }
 }

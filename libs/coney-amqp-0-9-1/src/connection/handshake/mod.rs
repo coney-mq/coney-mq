@@ -11,8 +11,7 @@ mod receive_protocol_header;
 
 pub async fn run<S>(
     framing: &mut AmqpFraming<S>,
-    authc: &dyn Authc,
-    config: &dyn AmqpConfig,
+    backend: &dyn Backend,
 ) -> Result<(), ConnectionError>
 where
     S: IoStream,
@@ -20,9 +19,9 @@ where
     log::trace!("handshake...");
     let protocol_version = receive_protocol_header::run(framing).await?;
     log::trace!("protocol-version: {}", protocol_version);
-    let identity = connection_start::run(framing, authc).await?;
+    let identity = connection_start::run(framing, backend.authc()).await?;
     log::trace!("identity: {:?}", identity);
-    let tuning = connection_tune::run(framing, config.connection_limits()).await?;
+    let tuning = connection_tune::run(framing, backend.amqp_config().connection_limits()).await?;
     log::trace!("tuning: {:?}", tuning);
     let _ = connection_open::run(framing).await?;
 

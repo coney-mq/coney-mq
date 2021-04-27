@@ -1,9 +1,12 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use ::amqp_0_9_1::backend::Backend;
+use ::amqp_0_9_1::config::AmqpConfig;
+use ::amqp_0_9_1::config::ConnectionLimits;
+use ::authc::Authc;
 use ::authc::AuthcWithMechs;
 use ::common::ErrorReport;
-use amqp_0_9_1::config::{AmqpConfig, ConnectionLimits};
 
 use ::futures::prelude::*;
 
@@ -35,21 +38,20 @@ async fn run() -> Result<(), AnyError> {
 
     let tcp_listener_running = tcp_listener.run().map_err(AnyError::from);
 
-    let authc = {
+    let backend = {
         let authc = AuthcWithMechs::create().with_mech(
             ::authc_plain_const_creds::AuthcMechPlainConstCreds::new(vec![
                 ("guest", "guest", "guest"),
                 ("admin", "admin", "admin"),
             ]),
         );
-        Arc::new(authc)
+        Arc::new(BE { authc })
     };
-    let config = Arc::new(Config);
 
     let tcp_inbound_spawned = async move {
         while let Some(io_stream) = tcp_rx.next().await {
             let framing = AmqpFraming::new(io_stream);
-            let conn = AmqpConnection::new(framing, authc.clone(), config.clone());
+            let conn = AmqpConnection::new(framing, backend.clone());
             let conn_running = conn
                 .run()
                 .map_err(|conn_err| log::error!("Connection Error:\n{}", conn_err.error_report()));
@@ -63,13 +65,15 @@ async fn run() -> Result<(), AnyError> {
     Ok(())
 }
 
-struct Config;
-impl AmqpConfig for Config {
+struct BE {
+    authc: AuthcWithMechs,
+}
+impl AmqpConfig for BE {
     fn connection_limits(&self) -> &dyn ConnectionLimits {
         self
     }
 }
-impl ConnectionLimits for Config {
+impl ConnectionLimits for BE {
     fn max_channels(&self) -> u16 {
         512
     }
@@ -78,5 +82,13 @@ impl ConnectionLimits for Config {
     }
     fn max_heartbeat(&self) -> u16 {
         300
+    }
+}
+impl Backend for BE {
+    fn amqp_config(&self) -> &dyn AmqpConfig {
+        self
+    }
+    fn authc(&self) -> &dyn Authc {
+        &self.authc
     }
 }

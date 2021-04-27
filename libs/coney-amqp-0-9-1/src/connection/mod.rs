@@ -4,7 +4,7 @@ use ::authc::Authc;
 
 use crate::amqp_framing::AmqpFraming;
 use crate::amqp_framing::IoStream;
-use crate::config::AmqpConfig;
+use crate::backend::Backend;
 
 mod error;
 pub use error::ConnectionError;
@@ -14,7 +14,6 @@ mod impl_connection;
 mod util;
 
 pub struct AmqpConnection<S> {
-    config: Arc<dyn AmqpConfig>,
-    authc: Arc<dyn Authc>,
+    backend: Arc<dyn Backend>,
     framing: AmqpFraming<S>,
 }
