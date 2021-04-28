@@ -5,4 +5,5 @@ pub trait AmqpConfig: Send + Sync + 'static {
     fn connection_limits(&self) -> &dyn ConnectionLimits;
 
     fn send_queue_buf_size(&self) -> usize;
+    fn conn_command_buf_size(&self) -> usize;
 }

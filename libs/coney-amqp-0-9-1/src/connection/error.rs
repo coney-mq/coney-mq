@@ -22,4 +22,13 @@ pub enum ISE {
 
     #[error("ISE::SendQueueEndOfStream")]
     SendQueueEndOfStream,
+
+    #[error("ISE::ConnCommandEndOfStream")]
+    ConnCommandEndOfStream,
+}
+
+impl From<ISE> for ConnectionError {
+    fn from(v: ISE) -> Self {
+        Self::ISE(v)
+    }
 }

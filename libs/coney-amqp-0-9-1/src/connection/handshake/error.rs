@@ -92,6 +92,7 @@ impl HandshakeError {
 
             Self::ISE { props, .. } => AmqpException::new("Internal Error")
                 .with_condition(Condition::InternalError)
+                .with_props(props)
                 .with_source(self),
 
             _ => return Err(ConnectionError::HandshakeError(self)),
