@@ -1,12 +1,8 @@
-#[macro_use]
-extern crate anyhow;
-
 use ::futures::prelude::*;
 
 use ::examples::*;
 
 use ::lapin::options::BasicPublishOptions;
-use ::lapin::options::ExchangeBindOptions;
 use ::lapin::options::ExchangeDeclareOptions;
 use ::lapin::options::QueueBindOptions;
 use ::lapin::options::QueueDeclareOptions;

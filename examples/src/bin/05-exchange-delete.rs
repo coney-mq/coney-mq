@@ -1,12 +1,6 @@
-#[macro_use]
-extern crate anyhow;
-
 use ::examples::*;
 
-use ::lapin::options::ExchangeDeclareOptions;
-use ::lapin::types::FieldTable;
 use ::lapin::Connection;
-use ::lapin::ExchangeKind;
 
 #[tokio::main]
 async fn main() {

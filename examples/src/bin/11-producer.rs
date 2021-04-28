@@ -1,15 +1,8 @@
-#[macro_use]
-extern crate anyhow;
-
-use std::time::Duration;
 use std::time::Instant;
-
-use ::futures::prelude::*;
 
 use ::examples::*;
 
 use ::lapin::options::BasicPublishOptions;
-use ::lapin::options::ExchangeBindOptions;
 use ::lapin::options::ExchangeDeclareOptions;
 use ::lapin::options::QueueBindOptions;
 use ::lapin::options::QueueDeclareOptions;
@@ -64,7 +57,7 @@ async fn run() -> Result<(), ::anyhow::Error> {
         )
         .await?;
 
-    let queue = channel_0
+    let _queue = channel_0
         .queue_declare(
             "q_10_1",
             queue_declare_opts.clone(),

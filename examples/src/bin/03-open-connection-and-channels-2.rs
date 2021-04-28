@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate anyhow;
-
 use ::examples::*;
 
 use ::lapin::Connection;
@@ -21,8 +18,8 @@ async fn run() -> Result<(), ::anyhow::Error> {
     let amqp_uri = config::amqp_uri();
 
     let connection = Connection::connect(&amqp_uri, Default::default()).await?;
-    let channel_0 = connection.create_channel().await?;
-    let channel_1 = connection.create_channel().await?;
+    let _channel_0 = connection.create_channel().await?;
+    let _channel_1 = connection.create_channel().await?;
     let () = connection.close(200 as u16, "See you!").await?;
 
     Ok(())

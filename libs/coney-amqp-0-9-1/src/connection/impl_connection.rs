@@ -1,9 +1,5 @@
 use super::*;
 
-use ::amq_protocol::frame::AMQPFrame;
-
-use ::common::ErrorReport;
-
 use handshake::HandshakeError;
 
 impl<S> std::fmt::Debug for AmqpConnection<S> {

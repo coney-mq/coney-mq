@@ -1,9 +1,9 @@
 use super::*;
 
 pub(super) async fn process_conn_command<S>(
-    framing: &mut AmqpFraming<S>,
-    context: &mut ConnContext,
-    command: ConnCommand,
+    _framing: &mut AmqpFraming<S>,
+    _context: &mut ConnContext,
+    _command: ConnCommand,
 ) -> Result<(), ConnectionError>
 where
     S: IoStream,

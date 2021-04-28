@@ -30,8 +30,8 @@ where
     match dispatch_result {
         Ok(loop_control) => Ok(loop_control),
         Err(soft_exception) if soft_exception.is_soft() => {
-            unimplemented!();
-            Ok(LoopControl::Continue)
+            unimplemented!()
+            // Ok(LoopControl::Continue)
         }
         Err(hard_exception) => {
             let () = closing::run(framing, hard_exception).await?;
@@ -42,7 +42,7 @@ where
 
 async fn dispatch_to_regular_channel(
     conn_channels: &mut ConnChannels,
-    context: &mut ConnContext,
+    _context: &mut ConnContext,
     channel_id: u16,
     inbound_frame: AMQPFrame,
 ) -> Result<LoopControl, AmqpException> {

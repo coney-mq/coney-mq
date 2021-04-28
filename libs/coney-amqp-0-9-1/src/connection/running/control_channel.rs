@@ -1,7 +1,6 @@
 use super::*;
 
 use ::amq_protocol::protocol::connection::AMQPMethod as AmqpMethodConn;
-use ::amq_protocol::protocol::connection::Close as ConnClose;
 use ::amq_protocol::protocol::connection::CloseOk as ConnCloseOk;
 
 #[derive(Debug)]
