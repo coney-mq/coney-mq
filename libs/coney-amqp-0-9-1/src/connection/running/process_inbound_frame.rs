@@ -42,12 +42,12 @@ where
 
 async fn dispatch_to_regular_channel(
     conn_channels: &mut ConnChannels,
-    _context: &mut ConnContext,
+    context: &mut ConnContext,
     channel_id: u16,
     inbound_frame: AMQPFrame,
 ) -> Result<LoopControl, AmqpException> {
     conn_channels
         .regular_mut(channel_id)?
-        .process_inbound_frame(inbound_frame)
+        .process_inbound_frame(context, inbound_frame)
         .await
 }
