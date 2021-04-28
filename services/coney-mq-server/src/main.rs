@@ -62,7 +62,8 @@ async fn run() -> Result<(), AnyError> {
             let conn = AmqpConnection::new(framing, backend.clone());
             let conn_running = conn
                 .run()
-                .map_err(|conn_err| log::error!("Connection Error:\n{}", conn_err.error_report()));
+                .map_err(|conn_err| log::error!("Connection Error:\n{}", conn_err.error_report()))
+                .map_ok(|()| log::info!("Connection terminated normally"));
             ::tokio::spawn(conn_running);
         }
         Result::<(), AnyError>::Ok(())

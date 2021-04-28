@@ -7,7 +7,7 @@ impl AmqpException {
     {
         Self {
             condition: Default::default(),
-            props: Default::default(),
+            caused_by: Default::default(),
             message: message.into(),
             source: None,
         }
@@ -18,8 +18,11 @@ impl AmqpException {
             ..self
         }
     }
-    pub fn with_props(self, props: Props) -> Self {
-        Self { props, ..self }
+    pub fn with_props(self, props: AmqpFrameProps) -> Self {
+        Self {
+            caused_by: props,
+            ..self
+        }
     }
     pub fn with_condition(self, condition: Condition) -> Self {
         Self { condition, ..self }
@@ -31,8 +34,8 @@ impl AmqpException {
     pub fn condition(&self) -> Condition {
         self.condition
     }
-    pub fn props(&self) -> Props {
-        self.props
+    pub fn props(&self) -> AmqpFrameProps {
+        self.caused_by
     }
 
     pub fn is_soft(&self) -> bool {

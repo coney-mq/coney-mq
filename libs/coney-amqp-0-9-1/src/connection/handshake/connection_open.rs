@@ -42,7 +42,7 @@ where
                 .vhost_select(vhost_name)
                 .await
                 .map_err(|source| HandshakeError::ISE {
-                    props: Props {
+                    props: AmqpFrameProps {
                         channel_id,
                         class_id: open.get_amqp_class_id(),
                         method_id: open.get_amqp_method_id(),

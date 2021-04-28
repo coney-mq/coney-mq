@@ -1,13 +1,13 @@
 use ::amq_protocol::frame::AMQPFrame;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Props {
+pub struct AmqpFrameProps {
     pub channel_id: u16,
     pub class_id: u16,
     pub method_id: u16,
 }
 
-impl std::fmt::Display for Props {
+impl std::fmt::Display for AmqpFrameProps {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -17,7 +17,7 @@ impl std::fmt::Display for Props {
     }
 }
 
-impl From<&AMQPFrame> for Props {
+impl From<&AMQPFrame> for AmqpFrameProps {
     fn from(v: &AMQPFrame) -> Self {
         match v {
             AMQPFrame::ProtocolHeader(_) => Default::default(),

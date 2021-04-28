@@ -3,6 +3,9 @@ use ::futures::stream::SplitSink;
 use ::futures::stream::SplitStream;
 use ::tokio_util::codec::Framed;
 
+mod amqp_frame_props;
+pub use amqp_frame_props::AmqpFrameProps;
+
 mod io_stream;
 pub use io_stream::IoStream;
 

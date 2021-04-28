@@ -1,12 +1,11 @@
 use super::*;
 
 use crate::amqp_exception::Condition;
-use crate::amqp_exception::Props;
 
 #[derive(Debug, ::thiserror::Error)]
 pub enum HandshakeError {
     #[error("HandshakeError::ExpectedControlChannel [ch-id: {}]", props.channel_id)]
-    ExpectedControlChannel { props: Props },
+    ExpectedControlChannel { props: AmqpFrameProps },
 
     #[error("HandshakeError::RecvError")]
     RecvError(#[source] util::RecvError),
@@ -17,7 +16,7 @@ pub enum HandshakeError {
     #[error("HandshakeError::UnexpectedFrame [expected: {}]", expected)]
     UnexpectedFrame {
         expected: &'static str,
-        props: Props,
+        props: AmqpFrameProps,
     },
 
     #[error("HandshakeError::UnsupportedProtocolVersion: {}", version)]
@@ -41,7 +40,7 @@ pub enum HandshakeError {
 
     #[error("HandshakeError::ISE")]
     ISE {
-        props: Props,
+        props: AmqpFrameProps,
         #[source]
         source: AnyError,
     },
@@ -106,8 +105,8 @@ const MID_CONN_SECURE_OK: u16 = 21;
 const MID_CONN_TUNE: u16 = 30;
 const MID_CONN_OPEN: u16 = 40;
 
-fn make_props(class_id: u16, method_id: u16) -> Props {
-    Props {
+fn make_props(class_id: u16, method_id: u16) -> AmqpFrameProps {
+    AmqpFrameProps {
         channel_id: CTL_CHANNEL_ID,
         class_id,
         method_id,

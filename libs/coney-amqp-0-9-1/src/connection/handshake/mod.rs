@@ -3,9 +3,8 @@ use super::*;
 use ::amq_protocol::frame::AMQPFrame;
 use ::amq_protocol::frame::ProtocolVersion;
 
-use crate::amqp_exception::Props;
+use crate::amqp_framing::AmqpFrameProps;
 use crate::amqp_framing::AmqpFraming;
-use crate::channels::Channel;
 
 mod error;
 pub use error::HandshakeError;
@@ -20,7 +19,7 @@ pub use connection_tune::Tuning;
 pub async fn run<S>(
     framing: &mut AmqpFraming<S>,
     backend: &dyn Backend,
-) -> Result<State, HandshakeError>
+) -> Result<ConnProps, HandshakeError>
 where
     S: IoStream,
 {
@@ -33,30 +32,16 @@ where
     log::trace!("tuning: {:?}", tuning);
     let (vhost_name, vhost_api) = connection_open::run(framing, backend).await?;
 
-    let channels = {
-        let mut channels = Vec::with_capacity(tuning.max_channels as usize);
-        let () = channels.push(Channel::create_control_channel());
-
-        for _chan_id in 1..tuning.max_channels {
-            let () = channels.push(Channel::create_regular_channel());
-        }
-
-        channels
-    };
-
-    let state = State {
+    let state = ConnProps {
         protocol_version,
         identity,
         tuning,
         vhost_name,
         vhost_api,
-        channels,
     };
 
     Ok(state)
 }
-
-pub const CTL_CHANNEL_ID: u16 = 0;
 
 fn expect_control_channel(
     channel_id: u16,
@@ -65,7 +50,7 @@ fn expect_control_channel(
 ) -> Result<(), HandshakeError> {
     if channel_id != CTL_CHANNEL_ID {
         return Err(HandshakeError::ExpectedControlChannel {
-            props: Props {
+            props: AmqpFrameProps {
                 channel_id,
                 class_id,
                 method_id,

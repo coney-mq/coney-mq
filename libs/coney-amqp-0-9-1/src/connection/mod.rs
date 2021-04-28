@@ -8,8 +8,10 @@ use crate::amqp_framing::AmqpFraming;
 use crate::amqp_framing::IoStream;
 use crate::backend::Backend;
 
-mod state;
-use state::State;
+pub const CTL_CHANNEL_ID: u16 = 0;
+
+mod props;
+pub use props::ConnProps;
 
 mod error;
 pub use error::ConnectionError;
@@ -17,6 +19,7 @@ pub use error::ISE;
 
 mod handshake;
 mod impl_connection;
+mod running;
 mod util;
 
 pub struct AmqpConnection<S> {
