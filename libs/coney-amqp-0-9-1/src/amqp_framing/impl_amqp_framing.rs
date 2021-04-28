@@ -25,6 +25,10 @@ where
     pub async fn send(&mut self, frame: AMQPFrame) -> Result<(), EncodeFailure> {
         self.framed_write.send(frame).await
     }
+
+    pub async fn flush(&mut self) -> Result<(), EncodeFailure> {
+        self.framed_write.flush().await
+    }
 }
 
 impl<S> std::fmt::Debug for AmqpFraming<S> {

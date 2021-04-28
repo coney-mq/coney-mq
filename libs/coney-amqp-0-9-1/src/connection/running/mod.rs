@@ -8,6 +8,9 @@ use ::futures::prelude::*;
 mod conn_context;
 use conn_context::ConnContext;
 
+mod conn_channels;
+use conn_channels::ConnChannels;
+
 mod control_channel;
 use control_channel::ControlChannel;
 
@@ -35,33 +38,6 @@ enum LoopControl {
     Break,
 }
 
-#[derive(Debug)]
-struct ConnChannels {
-    control_channel: ControlChannel,
-    regular_channels: Vec<RegularChannel>,
-}
-impl ConnChannels {
-    pub fn control_mut(&mut self) -> &mut ControlChannel {
-        &mut self.control_channel
-    }
-    pub fn regular_mut(&mut self, chan_id: u16) -> Result<&mut RegularChannel, AmqpException> {
-        if chan_id == 0 {
-            Err(AmqpException::new(
-                "Attempted to fetch control-channel from the regular-channels collection",
-            )
-            .with_condition(Condition::InternalError))?
-        }
-        self.regular_channels
-            .get_mut(chan_id as usize - 1)
-            .ok_or_else(|| {
-                AmqpException::new(
-                    "Attempted to access the channel beyond the quantity of channels",
-                )
-                .with_condition(Condition::ChannelError)
-            })
-    }
-}
-
 pub async fn run<S>(
     framing: &mut AmqpFraming<S>,
     conn_props: ConnProps,
@@ -76,12 +52,12 @@ where
     let (conn_command_tx, mut conn_command_rx) =
         mpsc::channel::<ConnCommand>(backend.amqp_config().conn_command_buf_size());
 
-    let mut conn_channels = ConnChannels {
-        control_channel: ControlChannel::new(),
-        regular_channels: (1..conn_props.tuning.max_channels)
+    let mut conn_channels = ConnChannels::new(
+        ControlChannel::new(),
+        (1..conn_props.tuning.max_channels)
             .map(RegularChannel::new)
             .collect(),
-    };
+    );
 
     let mut context = ConnContext::new(conn_props, send_queue_tx, conn_command_tx);
 
@@ -120,6 +96,11 @@ where
                         .map_err(Into::into)
                         .map_err(ConnectionError::IO)?;
                 }
+                framing
+                    .flush()
+                    .await
+                    .map_err(Into::into)
+                    .map_err(ConnectionError::IO)?;
 
                 break Ok(());
             }

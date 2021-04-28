@@ -13,6 +13,10 @@ where
         .await
         .map_err(Into::into)
         .map_err(ConnectionError::IO)?;
-
+    let () = amqp_framing
+        .flush()
+        .await
+        .map_err(Into::into)
+        .map_err(ConnectionError::IO)?;
     Ok(())
 }
