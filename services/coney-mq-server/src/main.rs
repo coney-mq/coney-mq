@@ -1,10 +1,6 @@
+use std::net::SocketAddr;
 use std::sync::Arc;
-use std::{collections::HashMap, net::SocketAddr};
 
-use ::amqp_0_9_1::backend::Backend;
-use ::amqp_0_9_1::config::AmqpConfig;
-use ::amqp_0_9_1::config::ConnectionLimits;
-use ::authc::Authc;
 use ::authc::AuthcWithMechs;
 use ::common::ErrorReport;
 use ::mq::vhost::VHost;
@@ -15,6 +11,8 @@ use ::amqp_0_9_1::amqp_framing::AmqpFraming;
 use ::amqp_0_9_1::connection::AmqpConnection;
 use ::amqp_0_9_1::listener::AmqpListener;
 use ::common::AnyError;
+
+mod backend;
 
 #[tokio::main]
 async fn main() {
@@ -40,7 +38,7 @@ async fn run() -> Result<(), AnyError> {
     let tcp_listener_running = tcp_listener.run().map_err(AnyError::from);
 
     let backend = {
-        let vhosts = vec![("", VH {})]
+        let vhosts = vec![("", backend::VH {})]
             .into_iter()
             .map(|(k, v)| {
                 let dyn_vh: Arc<dyn VHost> = Arc::new(v);
@@ -53,7 +51,7 @@ async fn run() -> Result<(), AnyError> {
                 ("admin", "admin", "admin"),
             ]),
         );
-        Arc::new(BE { authc, vhosts })
+        Arc::new(backend::BE { authc, vhosts })
     };
 
     let tcp_inbound_spawned = async move {
@@ -73,49 +71,3 @@ async fn run() -> Result<(), AnyError> {
 
     Ok(())
 }
-
-struct BE {
-    authc: AuthcWithMechs,
-    vhosts: HashMap<String, Arc<dyn VHost>>,
-}
-impl AmqpConfig for BE {
-    fn connection_limits(&self) -> &dyn ConnectionLimits {
-        self
-    }
-    fn send_queue_buf_size(&self) -> usize {
-        64
-    }
-    fn conn_command_buf_size(&self) -> usize {
-        64
-    }
-}
-impl ConnectionLimits for BE {
-    fn max_channels(&self) -> u16 {
-        512
-    }
-    fn max_frame_size(&self) -> u32 {
-        10240
-    }
-    fn max_heartbeat(&self) -> u16 {
-        300
-    }
-}
-#[async_trait::async_trait]
-impl Backend for BE {
-    fn amqp_config(&self) -> &dyn AmqpConfig {
-        self
-    }
-    fn authc(&self) -> &dyn Authc {
-        &self.authc
-    }
-
-    async fn vhost_select(&self, vhost_name: &str) -> Result<Option<Arc<dyn VHost>>, AnyError> {
-        Ok(self.vhosts.get(vhost_name).cloned())
-    }
-}
-
-#[derive(Debug)]
-struct VH {}
-
-#[async_trait::async_trait]
-impl VHost for VH {}
