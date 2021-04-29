@@ -3,8 +3,8 @@ use super::*;
 use ::amq_protocol::protocol::channel::*;
 
 mod method_close;
+mod method_close_ok;
 mod method_open;
-// mod method_close_ok;
 // mod method_flow;
 // mod method_flow_ok;
 
@@ -17,13 +17,13 @@ impl Handler<AMQPMethod> for RegularChannel {
     ) -> Result<LoopControl, AmqpException> {
         match query {
             AMQPMethod::Open(inner) => self.handle(context, inner).await,
-            AMQPMethod::OpenOk(inner) => unimplemented!(),
+            AMQPMethod::OpenOk(_inner) => unimplemented!(),
 
-            AMQPMethod::Flow(inner) => unimplemented!(),
-            AMQPMethod::FlowOk(inner) => unimplemented!(),
+            AMQPMethod::Flow(_inner) => unimplemented!(),
+            AMQPMethod::FlowOk(_inner) => unimplemented!(),
 
             AMQPMethod::Close(inner) => self.handle(context, inner).await,
-            AMQPMethod::CloseOk(inner) => unimplemented!(),
+            AMQPMethod::CloseOk(inner) => self.handle(context, inner).await,
         }
     }
 }

@@ -1,3 +1,5 @@
+use common::ErrorReport;
+
 use super::*;
 
 pub(super) async fn process_inbound_frame<S>(
@@ -30,10 +32,34 @@ where
     match dispatch_result {
         Ok(loop_control) => Ok(loop_control),
         Err(soft_exception) if soft_exception.is_soft() => {
-            unimplemented!()
-            // Ok(LoopControl::Continue)
+            log::warn!(
+                "Soft-Exception occurred in channel#{}:\n{}",
+                frame_props.channel_id,
+                soft_exception.error_report()
+            );
+
+            if frame_props.channel_id == 0 {
+                let () = closing::run(framing, soft_exception).await?;
+                Ok(LoopControl::Break)
+            } else {
+                let channel = conn_channels
+                    .regular_mut(frame_props.channel_id)
+                    .map_err(Into::into)
+                    .map_err(ISE::Generic)?;
+                let loop_control = channel
+                    .process_channel_error(context, soft_exception)
+                    .map_err(ISE::Generic)
+                    .await?;
+                Ok(loop_control)
+            }
         }
         Err(hard_exception) => {
+            log::warn!(
+                "Hard-Exception occurred in channel#{}:\n{}",
+                frame_props.channel_id,
+                hard_exception.error_report()
+            );
+
             let () = closing::run(framing, hard_exception).await?;
             Ok(LoopControl::Break)
         }

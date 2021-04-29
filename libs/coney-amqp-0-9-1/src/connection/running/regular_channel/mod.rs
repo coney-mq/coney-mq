@@ -1,5 +1,7 @@
 use super::*;
 
+use ::common::ErrorReport;
+
 mod chan_state;
 use chan_state::ChanState;
 
@@ -41,5 +43,54 @@ impl RegularChannel {
                 Err(AmqpException::new("Not implemented").with_condition(Condition::NotImplemented))
             }
         }
+    }
+
+    pub async fn process_channel_error(
+        &mut self,
+        context: &mut ConnContext,
+        error: AmqpException,
+    ) -> Result<LoopControl, AnyError> {
+        let chan_state = std::mem::replace(&mut self.chan_state, ChanState::Invalid);
+        let (next_state, loop_control) = match chan_state {
+            ChanState::Open { .. } => {
+                use ::amq_protocol::protocol::channel::AMQPMethod as AmqpMethodChan;
+                use ::amq_protocol::protocol::channel::Close as ChanClose;
+
+                let channel_id = self.id;
+                let reply_code = error.condition().id();
+                let reply_text = error.error_report();
+                let class_id = error.props().class_id;
+                let method_id = error.props().method_id;
+
+                let pdu = ChanClose {
+                    class_id,
+                    method_id,
+                    reply_code,
+                    reply_text: reply_text.into(),
+                };
+                let close_rq = AmqpMethodChan::Close(pdu);
+                let close_rq = AMQPClass::Channel(close_rq);
+                let close_rq = AMQPFrame::Method(channel_id, close_rq);
+
+                let () = context
+                    .send_frame(close_rq)
+                    .await
+                    .map_err(Into::into)
+                    .map_err(ISE::Generic)?;
+
+                (ChanState::Closing, LoopControl::Continue)
+            }
+            chan_state => {
+                log::warn!(
+                    "Unexpected amqp-exception while channel#{} is in state: {:?}:\n{}",
+                    self.id,
+                    chan_state,
+                    error.error_report()
+                );
+                (chan_state, LoopControl::Continue)
+            }
+        };
+        self.chan_state = next_state;
+        Ok(loop_control)
     }
 }

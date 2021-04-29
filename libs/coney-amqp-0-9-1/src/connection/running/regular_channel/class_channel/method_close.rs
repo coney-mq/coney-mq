@@ -22,7 +22,7 @@ impl Handler<Close> for RegularChannel {
                 Ok(LoopControl::Continue)
             }
             _ => Err(AmqpException::new(format!(
-                "Unexpected attempt to open channel#{}: {:?}",
+                "Unexpected attempt to close channel#{}: {:?}",
                 self.id, query
             ))
             .with_condition(Condition::ChannelError)),
