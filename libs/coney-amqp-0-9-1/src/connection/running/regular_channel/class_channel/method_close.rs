@@ -1,7 +1,7 @@
 use super::*;
 
 #[async_trait::async_trait]
-impl Handler<Close> for RegularChannel {
+impl Handler<Close, ConnContext, LoopControl> for RegularChannel {
     async fn handle(
         &mut self,
         context: &mut ConnContext,

@@ -9,7 +9,7 @@ mod method_open;
 // mod method_flow_ok;
 
 #[async_trait::async_trait]
-impl Handler<AMQPMethod> for RegularChannel {
+impl Handler<AMQPMethod, ConnContext, LoopControl> for RegularChannel {
     async fn handle(
         &mut self,
         context: &mut ConnContext,

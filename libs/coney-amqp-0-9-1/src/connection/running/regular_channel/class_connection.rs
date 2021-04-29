@@ -3,7 +3,7 @@ use super::*;
 use ::amq_protocol::protocol::connection::AMQPMethod;
 
 #[async_trait::async_trait]
-impl Handler<AMQPMethod> for RegularChannel {
+impl Handler<AMQPMethod, ConnContext, LoopControl> for RegularChannel {
     async fn handle(
         &mut self,
         _context: &mut ConnContext,
