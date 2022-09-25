@@ -1,10 +1,8 @@
 use ::examples::*;
 
-use ::lapin::options::ExchangeBindOptions;
-use ::lapin::options::ExchangeDeclareOptions;
+use ::lapin::options::{ExchangeBindOptions, ExchangeDeclareOptions};
 use ::lapin::types::FieldTable;
-use ::lapin::Connection;
-use ::lapin::ExchangeKind;
+use ::lapin::{Connection, ExchangeKind};
 
 #[tokio::main]
 async fn main() {

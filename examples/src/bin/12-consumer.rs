@@ -4,12 +4,9 @@ use ::futures::prelude::*;
 
 use ::examples::*;
 
-use ::lapin::options::ExchangeDeclareOptions;
-use ::lapin::options::QueueBindOptions;
-use ::lapin::options::QueueDeclareOptions;
+use ::lapin::options::{ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions};
 use ::lapin::types::FieldTable;
-use ::lapin::Connection;
-use ::lapin::ExchangeKind;
+use ::lapin::{Connection, ExchangeKind};
 
 #[tokio::main]
 async fn main() {
@@ -25,10 +22,8 @@ async fn main() {
 
 async fn run() -> Result<(), ::anyhow::Error> {
     let message_count: usize = std::env::var("MESSAGE_COUNT").unwrap().parse().unwrap();
-    let prefetch_count: usize = std::env::var("PREFETCH_COUNT")
-        .unwrap_or("0".to_owned())
-        .parse()
-        .unwrap();
+    let prefetch_count: usize =
+        std::env::var("PREFETCH_COUNT").unwrap_or("0".to_owned()).parse().unwrap();
 
     let amqp_uri = config::amqp_uri();
 
@@ -56,27 +51,15 @@ async fn run() -> Result<(), ::anyhow::Error> {
         .await?;
 
     let queue = channel_0
-        .queue_declare(
-            "q_10_1",
-            queue_declare_opts.clone(),
-            queue_declare_args.clone(),
-        )
+        .queue_declare("q_10_1", queue_declare_opts.clone(), queue_declare_args.clone())
         .await?;
 
     let () = channel_0
-        .queue_bind(
-            "q_10_1",
-            "e_10_1",
-            "#",
-            queue_bind_opts.clone(),
-            queue_bind_args.clone(),
-        )
+        .queue_bind("q_10_1", "e_10_1", "#", queue_bind_opts.clone(), queue_bind_args.clone())
         .await?;
 
     if prefetch_count > 0 {
-        let () = channel_0
-            .basic_qos(prefetch_count as u16, Default::default())
-            .await?;
+        let () = channel_0.basic_qos(prefetch_count as u16, Default::default()).await?;
     }
 
     let mut consumer = channel_0
@@ -94,23 +77,20 @@ async fn run() -> Result<(), ::anyhow::Error> {
     let mut messages_received: usize = 0;
 
     for i in 0..message_count {
-        if let Some(delivery) = consumer.next().await {
+        if let Some(delivery) = consumer.next().await.transpose()? {
             if start_at.is_none() {
                 start_at = Some(Instant::now());
             }
 
-            let (consumer_channel, delivery) = delivery?;
             println!("Delivery #{}: {} bytes", i, delivery.data.len());
 
             if prefetch_count > 0 {
-                let () = consumer_channel
-                    .basic_ack(delivery.delivery_tag, Default::default())
-                    .await?;
+                delivery.ack(Default::default()).await?;
             }
 
             messages_received = messages_received + 1;
         } else {
-            break;
+            break
         }
     }
 

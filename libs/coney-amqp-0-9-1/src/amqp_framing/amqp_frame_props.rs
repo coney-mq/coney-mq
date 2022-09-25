@@ -9,11 +9,7 @@ pub struct AmqpFrameProps {
 
 impl std::fmt::Display for AmqpFrameProps {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "[{}|{}:{}]",
-            self.channel_id, self.class_id, self.method_id
-        )
+        write!(f, "[{}|{}:{}]", self.channel_id, self.class_id, self.method_id)
     }
 }
 
@@ -26,19 +22,12 @@ impl From<&AMQPFrame> for AmqpFrameProps {
                 class_id: class.get_amqp_class_id(),
                 method_id: class.get_amqp_method_id(),
             },
-            AMQPFrame::Header(channel_id, class_id, _) => Self {
-                channel_id: *channel_id,
-                class_id: *class_id,
-                ..Default::default()
-            },
-            AMQPFrame::Body(channel_id, _) => Self {
-                channel_id: *channel_id,
-                ..Default::default()
-            },
-            AMQPFrame::Heartbeat(channel_id) => Self {
-                channel_id: *channel_id,
-                ..Default::default()
-            },
+            AMQPFrame::Header(channel_id, class_id, _) =>
+                Self { channel_id: *channel_id, class_id: *class_id, ..Default::default() },
+            AMQPFrame::Body(channel_id, _) =>
+                Self { channel_id: *channel_id, ..Default::default() },
+            AMQPFrame::Heartbeat(channel_id) =>
+                Self { channel_id: *channel_id, ..Default::default() },
         }
     }
 }

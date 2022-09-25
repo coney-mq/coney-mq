@@ -12,7 +12,7 @@ impl Handler<CloseOk, ConnContext, LoopControl> for RegularChannel {
                 log::trace!("Closing channel#{}", self.id);
                 self.chan_state = ChanState::Closed;
                 Ok(LoopControl::Continue)
-            }
+            },
             _ => Err(AmqpException::new(format!(
                 "Unexpected close-ok came to to channel#{}: {:?}",
                 self.id, query

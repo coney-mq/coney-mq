@@ -1,11 +1,8 @@
 use ::examples::*;
 
-use ::lapin::options::ExchangeDeclareOptions;
-use ::lapin::options::QueueBindOptions;
-use ::lapin::options::QueueDeclareOptions;
+use ::lapin::options::{ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions};
 use ::lapin::types::FieldTable;
-use ::lapin::Connection;
-use ::lapin::ExchangeKind;
+use ::lapin::{Connection, ExchangeKind};
 
 #[tokio::main]
 async fn main() {
@@ -45,21 +42,11 @@ async fn run() -> Result<(), ::anyhow::Error> {
         )
         .await?;
     let _queue = channel_0
-        .queue_declare(
-            "q_08_dst",
-            queue_declare_opts.clone(),
-            queue_declare_args.clone(),
-        )
+        .queue_declare("q_08_dst", queue_declare_opts.clone(), queue_declare_args.clone())
         .await?;
 
     let () = channel_0
-        .queue_bind(
-            "q_08_dst",
-            "e_08_src",
-            "routing-key",
-            queue_bind_opts,
-            queue_bind_args,
-        )
+        .queue_bind("q_08_dst", "e_08_src", "routing-key", queue_bind_opts, queue_bind_args)
         .await?;
 
     let () = connection.close(200 as u16, "See you!").await?;

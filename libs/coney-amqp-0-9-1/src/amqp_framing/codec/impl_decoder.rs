@@ -19,12 +19,12 @@ impl Decoder for AmqpFrameCodec {
                 let _ = src.split_to(split_to);
 
                 Ok(Some(frame))
-            }
+            },
             Err(nom_err) => match nom_err {
                 nom::Err::Incomplete(needed) => {
                     log::trace!("incomplete: {:?}", needed);
                     Ok(None)
-                }
+                },
                 nom::Err::Failure(err) => Err(DecodeFailure::ParseError(err)),
                 nom::Err::Error(err) => Err(DecodeFailure::ParseError(err)),
             },
@@ -60,13 +60,8 @@ impl<'a> ParsingContext<'a> {
 mod impl_buf_traits {
     use super::*;
 
-    use ::nom::InputIter;
-    use ::nom::InputLength;
-    use ::nom::InputTake;
-    use ::nom::Slice;
-    use ::nom::UnspecializedInput;
-    use std::iter::Cloned;
-    use std::iter::Enumerate;
+    use ::nom::{InputIter, InputLength, InputTake, Slice, UnspecializedInput};
+    use std::iter::{Cloned, Enumerate};
     use std::ops::RangeFrom;
     use std::slice::Iter;
 

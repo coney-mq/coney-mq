@@ -30,29 +30,17 @@ async fn run() -> Result<(), ::anyhow::Error> {
     let queue_declare_args = FieldTable::default();
 
     let queue_1 = channel_0
-        .queue_declare(
-            &queue_name_1,
-            queue_declare_opts.clone(),
-            queue_declare_args.clone(),
-        )
+        .queue_declare(&queue_name_1, queue_declare_opts.clone(), queue_declare_args.clone())
         .await?;
     log::info!("q1: {:?}", queue_1.name());
 
     let queue_2 = channel_1
-        .queue_declare(
-            &queue_name_2,
-            queue_declare_opts.clone(),
-            queue_declare_args.clone(),
-        )
+        .queue_declare(&queue_name_2, queue_declare_opts.clone(), queue_declare_args.clone())
         .await?;
     log::info!("q2: {:?}", queue_2.name());
 
-    let _ = channel_1
-        .queue_delete(&queue_1.name().as_str(), Default::default())
-        .await?;
-    let _ = channel_0
-        .queue_delete(&queue_2.name().as_str(), Default::default())
-        .await?;
+    let _ = channel_1.queue_delete(&queue_1.name().as_str(), Default::default()).await?;
+    let _ = channel_0.queue_delete(&queue_2.name().as_str(), Default::default()).await?;
 
     let () = connection.close(200 as u16, "See you!").await?;
 

@@ -4,8 +4,7 @@ use std::io::Error as IoError;
 use std::path::Path;
 
 use ::futures::prelude::*;
-use ::tokio::net::UnixListener;
-use ::tokio::net::UnixStream;
+use ::tokio::net::{UnixListener, UnixStream};
 
 #[async_trait::async_trait]
 impl Accept for UnixListener {
@@ -25,10 +24,7 @@ impl<S> AmqpListener<UnixListener, S> {
         S: Sink<UnixStream>,
     {
         let uds_listener = UnixListener::bind(bind_path)?;
-        let amqp_listener = Self {
-            accept: uds_listener,
-            sink,
-        };
+        let amqp_listener = Self { accept: uds_listener, sink };
         Ok(amqp_listener)
     }
 }

@@ -14,18 +14,10 @@ where
     let frame_props = AmqpFrameProps::from(&inbound_frame);
 
     let dispatch_result = if frame_props.channel_id == 0 {
-        conn_channels
-            .control_mut()
-            .process_inbound_frame(context, inbound_frame)
-            .await
+        conn_channels.control_mut().process_inbound_frame(context, inbound_frame).await
     } else {
-        dispatch_to_regular_channel(
-            conn_channels,
-            context,
-            frame_props.channel_id,
-            inbound_frame,
-        )
-        .await
+        dispatch_to_regular_channel(conn_channels, context, frame_props.channel_id, inbound_frame)
+            .await
     };
     let dispatch_result = dispatch_result.map_err(|e| e.with_props(frame_props));
 
@@ -52,7 +44,7 @@ where
                     .await?;
                 Ok(loop_control)
             }
-        }
+        },
         Err(hard_exception) => {
             log::warn!(
                 "Hard-Exception occurred in channel#{}:\n{}",
@@ -62,7 +54,7 @@ where
 
             let () = closing::run(framing, hard_exception).await?;
             Ok(LoopControl::Break)
-        }
+        },
     }
 }
 

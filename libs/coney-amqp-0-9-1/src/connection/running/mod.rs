@@ -54,9 +54,7 @@ where
 
     let mut conn_channels = ConnChannels::new(
         ControlChannel::new(),
-        (1..conn_props.tuning.max_channels)
-            .map(RegularChannel::new)
-            .collect(),
+        (1..conn_props.tuning.max_channels).map(RegularChannel::new).collect(),
     );
 
     let mut context = ConnContext::new(conn_props, send_queue_tx, conn_command_tx);
@@ -96,14 +94,10 @@ where
                         .map_err(Into::into)
                         .map_err(ConnectionError::IO)?;
                 }
-                framing
-                    .flush()
-                    .await
-                    .map_err(Into::into)
-                    .map_err(ConnectionError::IO)?;
+                framing.flush().await.map_err(Into::into).map_err(ConnectionError::IO)?;
 
-                break Ok(());
-            }
+                break Ok(())
+            },
             LoopControl::Continue => continue,
         }
     }

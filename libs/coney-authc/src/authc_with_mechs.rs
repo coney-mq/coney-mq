@@ -3,8 +3,7 @@ use super::*;
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::DynAuthcMech;
-use crate::IntoDynAuthcMech;
+use crate::{DynAuthcMech, IntoDynAuthcMech};
 
 pub struct AuthcWithMechs {
     mechs: HashMap<&'static str, Box<dyn DynAuthcMech>>,
@@ -33,9 +32,7 @@ impl fmt::Debug for AuthcWithMechs {
 
 impl AuthcWithMechs {
     pub fn create() -> Self {
-        Self {
-            mechs: Default::default(),
-        }
+        Self { mechs: Default::default() }
     }
 
     pub fn add_mech<M>(&mut self, mech: M) -> &mut Self

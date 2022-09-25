@@ -2,13 +2,11 @@ use std::time::Instant;
 
 use ::examples::*;
 
-use ::lapin::options::BasicPublishOptions;
-use ::lapin::options::ExchangeDeclareOptions;
-use ::lapin::options::QueueBindOptions;
-use ::lapin::options::QueueDeclareOptions;
+use ::lapin::options::{
+    BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions,
+};
 use ::lapin::types::FieldTable;
-use ::lapin::Connection;
-use ::lapin::ExchangeKind;
+use ::lapin::{Connection, ExchangeKind};
 
 #[tokio::main]
 async fn main() {
@@ -26,10 +24,8 @@ async fn run() -> Result<(), ::anyhow::Error> {
     let immediate: bool = std::env::var("IMMEDIATE").ok() == Some("1".to_owned());
     let mandatory: bool = std::env::var("MANDATORY").ok() == Some("1".to_owned());
     let message_count: usize = std::env::var("MESSAGE_COUNT").unwrap().parse().unwrap();
-    let payload_size: usize = std::env::var("PAYLOAD_SIZE")
-        .unwrap_or("1024".to_owned())
-        .parse()
-        .unwrap();
+    let payload_size: usize =
+        std::env::var("PAYLOAD_SIZE").unwrap_or("1024".to_owned()).parse().unwrap();
     let payload: Vec<u8> = vec![0; payload_size];
 
     let amqp_uri = config::amqp_uri();
@@ -58,38 +54,25 @@ async fn run() -> Result<(), ::anyhow::Error> {
         .await?;
 
     let _queue = channel_0
-        .queue_declare(
-            "q_10_1",
-            queue_declare_opts.clone(),
-            queue_declare_args.clone(),
-        )
+        .queue_declare("q_10_1", queue_declare_opts.clone(), queue_declare_args.clone())
         .await?;
 
     let () = channel_0
-        .queue_bind(
-            "q_10_1",
-            "e_10_1",
-            "#",
-            queue_bind_opts.clone(),
-            queue_bind_args.clone(),
-        )
+        .queue_bind("q_10_1", "e_10_1", "#", queue_bind_opts.clone(), queue_bind_args.clone())
         .await?;
 
     let start_at = Instant::now();
     for i in 0..message_count {
         let i: usize = i;
 
-        let basic_publish_opts = BasicPublishOptions {
-            mandatory,
-            immediate,
-        };
+        let basic_publish_opts = BasicPublishOptions { mandatory, immediate };
 
         let confirm = channel_0
             .basic_publish(
                 "e_10_1",
                 "please-pretty-please",
                 basic_publish_opts,
-                payload.to_owned(),
+                &payload[..],
                 Default::default(),
             )
             .await?;

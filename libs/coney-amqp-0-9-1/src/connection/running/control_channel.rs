@@ -1,7 +1,6 @@
 use super::*;
 
-use ::amq_protocol::protocol::connection::AMQPMethod as AmqpMethodConn;
-use ::amq_protocol::protocol::connection::CloseOk as ConnCloseOk;
+use ::amq_protocol::protocol::connection::{AMQPMethod as AmqpMethodConn, CloseOk as ConnCloseOk};
 
 #[derive(Debug)]
 pub(super) struct ControlChannel {}
@@ -17,9 +16,8 @@ impl ControlChannel {
         inbound_frame: AMQPFrame,
     ) -> Result<LoopControl, AmqpException> {
         match inbound_frame {
-            AMQPFrame::Method(_, amqp_class) => {
-                self.process_inbound_amqp_class(context, amqp_class).await
-            }
+            AMQPFrame::Method(_, amqp_class) =>
+                self.process_inbound_amqp_class(context, amqp_class).await,
 
             _ => Err(AmqpException::new("Not implemented")
                 .with_condition(Condition::NotImplemented)
@@ -40,18 +38,17 @@ impl ControlChannel {
                 let close_ok = AMQPFrame::Method(CTL_CHANNEL_ID, close_ok);
                 let _ = context.send_frame(close_ok).await;
                 Ok(LoopControl::Break)
-            }
+            },
 
             AMQPClass::Connection(unexpected) => {
                 log::warn!("Received unexpected Connection-method: {:?}", unexpected);
                 Err(AmqpException::new("Unexpected Connection-method")
                     .with_condition(Condition::CommandInvalid))
-            }
+            },
 
-            _ => Err(AmqpException::new(
-                "Control channel only expects AMQP-Class Connection frames",
-            )
-            .with_condition(Condition::CommandInvalid)),
+            _ =>
+                Err(AmqpException::new("Control channel only expects AMQP-Class Connection frames")
+                    .with_condition(Condition::CommandInvalid)),
         }
     }
 }

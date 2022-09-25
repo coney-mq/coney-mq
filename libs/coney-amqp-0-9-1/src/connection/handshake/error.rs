@@ -14,10 +14,7 @@ pub enum HandshakeError {
     SendError(#[source] AnyError),
 
     #[error("HandshakeError::UnexpectedFrame [expected: {}]", expected)]
-    UnexpectedFrame {
-        expected: &'static str,
-        props: AmqpFrameProps,
-    },
+    UnexpectedFrame { expected: &'static str, props: AmqpFrameProps },
 
     #[error("HandshakeError::UnsupportedProtocolVersion: {}", version)]
     UnsupportedProtocolVersion { version: ProtocolVersion },
@@ -29,11 +26,7 @@ pub enum HandshakeError {
     AuthcMechError(#[source] ::authc::AuthcFailure),
 
     #[error("HandshakeError::TuneNegotiationError")]
-    TuneNegotiationError {
-        field: &'static str,
-        max: u32,
-        requested: u32,
-    },
+    TuneNegotiationError { field: &'static str, max: u32, requested: u32 },
 
     #[error("HandshakeError::NoSuchVHost: {}", _0)]
     NoSuchVHost(String),
@@ -60,22 +53,20 @@ impl From<::authc::AuthcFailure> for HandshakeError {
 impl HandshakeError {
     pub fn into_amqp_exception(self) -> Result<AmqpException, ConnectionError> {
         let amqp_exception = match self {
-            Self::ExpectedControlChannel { props, .. } => {
+            Self::ExpectedControlChannel { props, .. } =>
                 AmqpException::new("expected control channel")
                     .with_condition(Condition::ChannelError)
                     .with_props(props)
-                    .with_source(self)
-            }
+                    .with_source(self),
             Self::UnexpectedFrame { props, .. } => AmqpException::new("invalid command")
                 .with_condition(Condition::CommandInvalid)
                 .with_props(props)
                 .with_source(self),
-            Self::AuthcTooManyChallenges { .. } => {
+            Self::AuthcTooManyChallenges { .. } =>
                 AmqpException::new("too many authentication challenge attempts")
                     .with_condition(Condition::NotAllowed)
                     .with_props(make_props(CID_CONN, MID_CONN_SECURE_OK))
-                    .with_source(self)
-            }
+                    .with_source(self),
             Self::AuthcMechError { .. } => AmqpException::new("authentication failure")
                 .with_condition(Condition::NotAllowed)
                 .with_props(make_props(CID_CONN, MID_CONN_SECURE_OK))
@@ -107,9 +98,5 @@ const MID_CONN_TUNE: u16 = 30;
 const MID_CONN_OPEN: u16 = 40;
 
 fn make_props(class_id: u16, method_id: u16) -> AmqpFrameProps {
-    AmqpFrameProps {
-        channel_id: CTL_CHANNEL_ID,
-        class_id,
-        method_id,
-    }
+    AmqpFrameProps { channel_id: CTL_CHANNEL_ID, class_id, method_id }
 }

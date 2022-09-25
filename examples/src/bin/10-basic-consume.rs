@@ -2,13 +2,11 @@ use ::futures::prelude::*;
 
 use ::examples::*;
 
-use ::lapin::options::BasicPublishOptions;
-use ::lapin::options::ExchangeDeclareOptions;
-use ::lapin::options::QueueBindOptions;
-use ::lapin::options::QueueDeclareOptions;
+use ::lapin::options::{
+    BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions,
+};
 use ::lapin::types::FieldTable;
-use ::lapin::Connection;
-use ::lapin::ExchangeKind;
+use ::lapin::{Connection, ExchangeKind};
 
 #[tokio::main]
 async fn main() {
@@ -49,21 +47,11 @@ async fn run() -> Result<(), ::anyhow::Error> {
         .await?;
 
     let queue = channel_0
-        .queue_declare(
-            "q_10_1",
-            queue_declare_opts.clone(),
-            queue_declare_args.clone(),
-        )
+        .queue_declare("q_10_1", queue_declare_opts.clone(), queue_declare_args.clone())
         .await?;
 
     let () = channel_0
-        .queue_bind(
-            "q_10_1",
-            "e_10_1",
-            "#",
-            queue_bind_opts.clone(),
-            queue_bind_args.clone(),
-        )
+        .queue_bind("q_10_1", "e_10_1", "#", queue_bind_opts.clone(), queue_bind_args.clone())
         .await?;
 
     let mut consumer = channel_0
@@ -77,17 +65,14 @@ async fn run() -> Result<(), ::anyhow::Error> {
 
     println!("Consumer: {:#?}", consumer);
 
-    let basic_publish_opts = BasicPublishOptions {
-        mandatory: true,
-        immediate: true,
-    };
+    let basic_publish_opts = BasicPublishOptions { mandatory: true, immediate: true };
 
     let confirm = channel_0
         .basic_publish(
             "e_10_1",
             "please-pretty-please",
             basic_publish_opts,
-            "Well, hello!".as_bytes().to_owned(),
+            "Well, hello!".as_bytes(),
             Default::default(),
         )
         .await?;
@@ -96,9 +81,8 @@ async fn run() -> Result<(), ::anyhow::Error> {
 
     println!("Confirmed: {:#?}", confirmed);
 
-    let (consumer_channel, delivery) = consumer.next().await.expect("No delivery! Why?")?;
+    let delivery = consumer.next().await.expect("No delivery! Why?")?;
     println!("Delivery: {:#?}", delivery);
-    println!("Channel: {:#?}", consumer_channel);
 
     let () = connection.close(200 as u16, "See you!").await?;
 

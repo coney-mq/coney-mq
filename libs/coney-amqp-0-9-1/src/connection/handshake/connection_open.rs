@@ -65,13 +65,12 @@ where
                 .map_err(HandshakeError::SendError)?;
 
             Ok((vhost_name, vhost_api))
-        }
+        },
 
-        unexpected => {
+        unexpected =>
             return Err(HandshakeError::UnexpectedFrame {
                 expected: "Method.Connection/Open",
                 props: From::from(&unexpected),
-            })
-        }
+            }),
     }
 }

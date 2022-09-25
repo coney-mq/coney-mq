@@ -1,10 +1,8 @@
 use super::*;
 
-use ::amq_protocol::frame::AMQPFrame;
-use ::amq_protocol::frame::ProtocolVersion;
+use ::amq_protocol::frame::{AMQPFrame, ProtocolVersion};
 
-use crate::amqp_framing::AmqpFrameProps;
-use crate::amqp_framing::AmqpFraming;
+use crate::amqp_framing::{AmqpFrameProps, AmqpFraming};
 
 mod error;
 pub use error::HandshakeError;
@@ -32,13 +30,7 @@ where
     log::trace!("tuning: {:?}", tuning);
     let (vhost_name, vhost_api) = connection_open::run(framing, backend).await?;
 
-    let state = ConnProps {
-        protocol_version,
-        identity,
-        tuning,
-        vhost_name,
-        vhost_api,
-    };
+    let state = ConnProps { protocol_version, identity, tuning, vhost_name, vhost_api };
 
     Ok(state)
 }
@@ -50,12 +42,8 @@ fn expect_control_channel(
 ) -> Result<(), HandshakeError> {
     if channel_id != CTL_CHANNEL_ID {
         return Err(HandshakeError::ExpectedControlChannel {
-            props: AmqpFrameProps {
-                channel_id,
-                class_id,
-                method_id,
-            },
-        });
+            props: AmqpFrameProps { channel_id, class_id, method_id },
+        })
     } else {
         Ok(())
     }

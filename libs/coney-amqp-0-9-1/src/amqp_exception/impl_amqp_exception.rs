@@ -13,16 +13,10 @@ impl AmqpException {
         }
     }
     pub fn with_source<E: Into<AnyError>>(self, source: E) -> Self {
-        Self {
-            source: Some(source.into()),
-            ..self
-        }
+        Self { source: Some(source.into()), ..self }
     }
     pub fn with_props(self, props: AmqpFrameProps) -> Self {
-        Self {
-            caused_by: props,
-            ..self
-        }
+        Self { caused_by: props, ..self }
     }
     pub fn with_condition(self, condition: Condition) -> Self {
         Self { condition, ..self }

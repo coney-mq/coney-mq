@@ -20,7 +20,7 @@ impl Handler<Close, ConnContext, LoopControl> for RegularChannel {
                 let () = context.send_frame(close_ok).await?;
 
                 Ok(LoopControl::Continue)
-            }
+            },
             _ => Err(AmqpException::new(format!(
                 "Unexpected attempt to close channel#{}: {:?}",
                 self.id, query

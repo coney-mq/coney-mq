@@ -1,13 +1,11 @@
 use ::examples::*;
 
-use ::lapin::options::BasicPublishOptions;
-use ::lapin::options::ExchangeBindOptions;
-use ::lapin::options::ExchangeDeclareOptions;
-use ::lapin::options::QueueBindOptions;
-use ::lapin::options::QueueDeclareOptions;
+use ::lapin::options::{
+    BasicPublishOptions, ExchangeBindOptions, ExchangeDeclareOptions, QueueBindOptions,
+    QueueDeclareOptions,
+};
 use ::lapin::types::FieldTable;
-use ::lapin::Connection;
-use ::lapin::ExchangeKind;
+use ::lapin::{Connection, ExchangeKind};
 
 #[tokio::main]
 async fn main() {
@@ -92,32 +90,16 @@ async fn run() -> Result<(), ::anyhow::Error> {
         .await?;
 
     let _queue = channel_0
-        .queue_declare(
-            "q_09_1",
-            queue_declare_opts.clone(),
-            queue_declare_args.clone(),
-        )
+        .queue_declare("q_09_1", queue_declare_opts.clone(), queue_declare_args.clone())
         .await?;
     let _queue = channel_0
-        .queue_declare(
-            "q_09_2_1",
-            queue_declare_opts.clone(),
-            queue_declare_args.clone(),
-        )
+        .queue_declare("q_09_2_1", queue_declare_opts.clone(), queue_declare_args.clone())
         .await?;
     let _queue = channel_0
-        .queue_declare(
-            "q_09_2_2",
-            queue_declare_opts.clone(),
-            queue_declare_args.clone(),
-        )
+        .queue_declare("q_09_2_2", queue_declare_opts.clone(), queue_declare_args.clone())
         .await?;
     let _queue = channel_0
-        .queue_declare(
-            "q_09_3",
-            queue_declare_opts.clone(),
-            queue_declare_args.clone(),
-        )
+        .queue_declare("q_09_3", queue_declare_opts.clone(), queue_declare_args.clone())
         .await?;
 
     let () = channel_0
@@ -158,13 +140,7 @@ async fn run() -> Result<(), ::anyhow::Error> {
         .await?;
 
     let () = channel_0
-        .queue_bind(
-            "q_09_1",
-            "e_09_1",
-            "#.d1.#",
-            queue_bind_opts.clone(),
-            queue_bind_args.clone(),
-        )
+        .queue_bind("q_09_1", "e_09_1", "#.d1.#", queue_bind_opts.clone(), queue_bind_args.clone())
         .await?;
     let () = channel_0
         .queue_bind(
@@ -185,28 +161,13 @@ async fn run() -> Result<(), ::anyhow::Error> {
         )
         .await?;
     let () = channel_0
-        .queue_bind(
-            "q_09_3",
-            "e_09_3",
-            "#.d3.#",
-            queue_bind_opts.clone(),
-            queue_bind_args.clone(),
-        )
+        .queue_bind("q_09_3", "e_09_3", "#.d3.#", queue_bind_opts.clone(), queue_bind_args.clone())
         .await?;
 
-    let basic_publish_opts = BasicPublishOptions {
-        mandatory,
-        immediate,
-    };
+    let basic_publish_opts = BasicPublishOptions { mandatory, immediate };
 
     let confirm = channel_0
-        .basic_publish(
-            "e_09_1",
-            &routing_key,
-            basic_publish_opts,
-            Vec::new(),
-            Default::default(),
-        )
+        .basic_publish("e_09_1", &routing_key, basic_publish_opts, &[], Default::default())
         .await?;
 
     let confirmed = confirm.await?;

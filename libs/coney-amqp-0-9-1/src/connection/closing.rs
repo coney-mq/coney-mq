@@ -1,9 +1,9 @@
 use super::*;
 
 use ::amq_protocol::frame::AMQPFrame;
-use ::amq_protocol::protocol::connection::AMQPMethod as AmqpMethodConn;
-use ::amq_protocol::protocol::connection::Close as ConnClose;
-use ::amq_protocol::protocol::connection::CloseOk as ConnCloseOk;
+use ::amq_protocol::protocol::connection::{
+    AMQPMethod as AmqpMethodConn, Close as ConnClose, CloseOk as ConnCloseOk,
+};
 use ::amq_protocol::protocol::AMQPClass;
 
 use ::common::ErrorReport;
@@ -17,11 +17,8 @@ where
 {
     let () = send_conn_close(framing, amqp_exception).await?;
 
-    while let Some(inbound_frame) = framing
-        .recv()
-        .await
-        .map_err(Into::into)
-        .map_err(ConnectionError::IO)?
+    while let Some(inbound_frame) =
+        framing.recv().await.map_err(Into::into).map_err(ConnectionError::IO)?
     {
         match inbound_frame {
             AMQPFrame::Method(
@@ -29,8 +26,8 @@ where
                 AMQPClass::Connection(AmqpMethodConn::CloseOk(_close_ok)),
             ) => {
                 log::trace!("Received Conn/Close-Ok. Shutting down.");
-                return Ok(());
-            }
+                return Ok(())
+            },
 
             AMQPFrame::Method(
                 CTL_CHANNEL_ID,
@@ -46,15 +43,11 @@ where
                 let close_ok = AMQPClass::Connection(close_ok);
                 let close_ok = AMQPFrame::Method(CTL_CHANNEL_ID, close_ok);
 
-                framing
-                    .send(close_ok)
-                    .await
-                    .map_err(Into::into)
-                    .map_err(ConnectionError::IO)?;
+                framing.send(close_ok).await.map_err(Into::into).map_err(ConnectionError::IO)?;
 
                 let () = maybe_receive_close_ok(framing).await?;
-                return Ok(());
-            }
+                return Ok(())
+            },
 
             to_ignore => log::trace!("The connection is closing. Ignoring {:?}", to_ignore),
         }
@@ -67,11 +60,8 @@ async fn maybe_receive_close_ok<S>(framing: &mut AmqpFraming<S>) -> Result<(), C
 where
     S: IoStream,
 {
-    while let Some(inbound_frame) = framing
-        .recv()
-        .await
-        .map_err(Into::into)
-        .map_err(ConnectionError::IO)?
+    while let Some(inbound_frame) =
+        framing.recv().await.map_err(Into::into).map_err(ConnectionError::IO)?
     {
         match inbound_frame {
             AMQPFrame::Method(
@@ -79,8 +69,8 @@ where
                 AMQPClass::Connection(AmqpMethodConn::CloseOk(_close_ok)),
             ) => {
                 log::trace!("Received Conn/Close-Ok. Shutting down.");
-                return Ok(());
-            }
+                return Ok(())
+            },
 
             to_ignore => log::trace!("The connection is closing. Ignoring {:?}", to_ignore),
         }
@@ -101,28 +91,14 @@ where
     let method_id = amqp_exception.props().method_id;
     let channel_id = CTL_CHANNEL_ID;
 
-    let pdu = ConnClose {
-        class_id,
-        method_id,
-        reply_code,
-        reply_text: reply_text.into(),
-    };
+    let pdu = ConnClose { class_id, method_id, reply_code, reply_text: reply_text.into() };
     let close_rq = AmqpMethodConn::Close(pdu);
     let close_rq = AMQPClass::Connection(close_rq);
     let close_rq = AMQPFrame::Method(channel_id, close_rq);
 
-    let () = framing
-        .send(close_rq)
-        .await
-        .map_err(Into::into)
-        .map_err(ConnectionError::IO)?;
+    let () = framing.send(close_rq).await.map_err(Into::into).map_err(ConnectionError::IO)?;
 
-    if let Some(close_rs) = framing
-        .recv()
-        .await
-        .map_err(Into::into)
-        .map_err(ConnectionError::IO)?
-    {
+    if let Some(close_rs) = framing.recv().await.map_err(Into::into).map_err(ConnectionError::IO)? {
         match close_rs {
             AMQPFrame::Method(
                 CTL_CHANNEL_ID,

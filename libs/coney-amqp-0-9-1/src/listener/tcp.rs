@@ -4,8 +4,7 @@ use std::io::Error as IoError;
 use std::net::SocketAddr;
 
 use ::futures::prelude::*;
-use ::tokio::net::TcpListener;
-use ::tokio::net::TcpStream;
+use ::tokio::net::{TcpListener, TcpStream};
 
 #[async_trait::async_trait]
 impl Accept for TcpListener {
@@ -24,10 +23,7 @@ impl<S> AmqpListener<TcpListener, S> {
         S: Sink<TcpStream>,
     {
         let tcp_listener = TcpListener::bind(bind_addr).await?;
-        let amqp_listener = Self {
-            accept: tcp_listener,
-            sink,
-        };
+        let amqp_listener = Self { accept: tcp_listener, sink };
         Ok(amqp_listener)
     }
 }

@@ -16,10 +16,7 @@ impl AuthcMechPlainConstCreds {
         let creds = users
             .into_iter()
             .map(|(l, p, i)| {
-                (
-                    (l.as_ref().to_owned(), p.as_ref().to_owned()),
-                    i.as_ref().to_owned(),
-                )
+                ((l.as_ref().to_owned(), p.as_ref().to_owned()), i.as_ref().to_owned())
             })
             .collect();
         let creds = Arc::new(creds);

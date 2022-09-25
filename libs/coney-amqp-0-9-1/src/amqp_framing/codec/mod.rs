@@ -13,9 +13,7 @@ pub struct AmqpFrameCodec {
 }
 impl AmqpFrameCodec {
     pub fn new(enc_buf_size: u32) -> Self {
-        Self {
-            enc_buf: vec![0; enc_buf_size as usize],
-        }
+        Self { enc_buf: vec![0; enc_buf_size as usize] }
     }
 }
 

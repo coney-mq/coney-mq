@@ -1,5 +1,4 @@
-use ::tokio::io::AsyncRead;
-use ::tokio::io::AsyncWrite;
+use ::tokio::io::{AsyncRead, AsyncWrite};
 
 pub trait IoStream: AsyncRead + AsyncWrite + Send + Sync + 'static {}
 

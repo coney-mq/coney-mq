@@ -1,10 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use ::authc::AuthcFailure;
-use ::authc::AuthcMech;
-use ::authc::Procedure;
-use ::authc::ProcedureReply;
+use ::authc::{AuthcFailure, AuthcMech, Procedure, ProcedureReply};
 
 mod mech;
 pub use mech::AuthcMechPlainConstCreds;

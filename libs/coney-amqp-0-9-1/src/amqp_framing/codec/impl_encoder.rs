@@ -2,8 +2,7 @@ use super::*;
 
 use ::tokio_util::codec::Encoder;
 
-use ::amq_protocol::frame::gen_frame;
-use ::amq_protocol::frame::WriteContext;
+use ::amq_protocol::frame::{gen_frame, WriteContext};
 
 impl Encoder<AMQPFrame> for AmqpFrameCodec {
     type Error = EncodeFailure;
@@ -14,7 +13,7 @@ impl Encoder<AMQPFrame> for AmqpFrameCodec {
             Ok(write_context) => {
                 let (_enc_buf_remainder, size) = write_context.into_inner();
                 Ok(size)
-            }
+            },
             Err(gen_error) => Err(EncodeFailure::GenError(gen_error)),
         }?;
 

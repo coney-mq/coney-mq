@@ -12,10 +12,7 @@ where
         let amqp_codec = AmqpFrameCodec::new(ENC_BUF_SIZE);
         let framed_stream = Framed::new(io_stream, amqp_codec);
         let (framed_write, framed_read) = framed_stream.split();
-        Self {
-            framed_write,
-            framed_read,
-        }
+        Self { framed_write, framed_read }
     }
 
     pub async fn recv(&mut self) -> Result<Option<AMQPFrame>, DecodeFailure> {
@@ -33,7 +30,6 @@ where
 
 impl<S> std::fmt::Debug for AmqpFraming<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(&format!("AmqpFraming<{}>", std::any::type_name::<S>()))
-            .finish()
+        f.debug_struct(&format!("AmqpFraming<{}>", std::any::type_name::<S>())).finish()
     }
 }

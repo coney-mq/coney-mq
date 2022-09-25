@@ -13,11 +13,7 @@ impl ConnContext {
         send_queue_tx: mpsc::Sender<AMQPFrame>,
         conn_command_tx: mpsc::Sender<ConnCommand>,
     ) -> Self {
-        Self {
-            conn_props,
-            send_queue_tx,
-            conn_command_tx,
-        }
+        Self { conn_props, send_queue_tx, conn_command_tx }
     }
 
     pub async fn send_frame(&mut self, frame: AMQPFrame) -> Result<(), AmqpException> {

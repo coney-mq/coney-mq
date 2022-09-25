@@ -2,10 +2,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use ::amqp_0_9_1::backend::Backend;
-use ::amqp_0_9_1::config::AmqpConfig;
-use ::amqp_0_9_1::config::ConnectionLimits;
-use ::authc::Authc;
-use ::authc::AuthcWithMechs;
+use ::amqp_0_9_1::config::{AmqpConfig, ConnectionLimits};
+use ::authc::{Authc, AuthcWithMechs};
 use ::common::AnyError;
 use ::mq::vhost::VHost;
 

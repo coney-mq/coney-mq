@@ -1,7 +1,6 @@
 use super::*;
 
-use ::amq_protocol::protocol::connection::AMQPMethod;
-use ::amq_protocol::protocol::connection::Tune;
+use ::amq_protocol::protocol::connection::{AMQPMethod, Tune};
 use ::amq_protocol::protocol::AMQPClass;
 // use ::amq_protocol::protocol::connection::TuneOk;
 
@@ -42,11 +41,8 @@ where
     let max_frame_size = conn_limits.max_frame_size();
     let max_heartbeat = conn_limits.max_heartbeat();
 
-    let tune = Tune {
-        channel_max: max_channels,
-        frame_max: max_frame_size,
-        heartbeat: max_heartbeat,
-    };
+    let tune =
+        Tune { channel_max: max_channels, frame_max: max_frame_size, heartbeat: max_heartbeat };
     let method = AMQPMethod::Tune(tune);
     let class = AMQPClass::Connection(method);
     let frame = AMQPFrame::Method(CTL_CHANNEL_ID, class);
@@ -84,7 +80,7 @@ where
                     tune_ok.heartbeat,
                 )?,
             })
-        }
+        },
         unexpected => Err(HandshakeError::UnexpectedFrame {
             expected: "Method.Connection/Tune-Ok",
             props: From::from(&unexpected),

@@ -1,9 +1,6 @@
 use super::*;
 
-use ::amq_protocol::protocol::connection::AMQPMethod;
-use ::amq_protocol::protocol::connection::Secure;
-use ::amq_protocol::protocol::connection::Start;
-use ::amq_protocol::protocol::connection::StartOk;
+use ::amq_protocol::protocol::connection::{AMQPMethod, Secure, Start, StartOk};
 use ::amq_protocol::protocol::AMQPClass;
 
 const MAX_CHALLENGES_COUNT: usize = 10;
@@ -63,9 +60,8 @@ where
     let frame = util::receive_frame(framing).await?;
 
     match frame {
-        AMQPFrame::Method(channel_id, AMQPClass::Connection(AMQPMethod::StartOk(start_ok))) => {
-            process_start_ok(framing, authc, channel_id, start_ok).await
-        }
+        AMQPFrame::Method(channel_id, AMQPClass::Connection(AMQPMethod::StartOk(start_ok))) =>
+            process_start_ok(framing, authc, channel_id, start_ok).await,
         unexpected => Err(HandshakeError::UnexpectedFrame {
             expected: "Method.Connection/Start-Ok",
             props: From::from(&unexpected),
@@ -82,8 +78,7 @@ async fn process_start_ok<S>(
 where
     S: IoStream,
 {
-    use ::authc::AuthcFailure;
-    use ::authc::ProcedureReply;
+    use ::authc::{AuthcFailure, ProcedureReply};
 
     let () = expect_control_channel(
         channel_id,
@@ -93,22 +88,18 @@ where
     let mech_name = start_ok.mechanism.as_str();
     let mut procedure = authc
         .select_mech(mech_name)
-        .ok_or(AuthcFailure::unsupported_mechanism(
-            start_ok.mechanism.as_str(),
-        ))?;
+        .ok_or(AuthcFailure::unsupported_mechanism(start_ok.mechanism.as_str()))?;
 
-    let mut response = start_ok.response.as_str().to_owned();
+    let mut response = start_ok.response.to_string();
 
     for _ in 0..MAX_CHALLENGES_COUNT {
         match procedure.response(&response).await? {
             ProcedureReply::Failure => Err(AuthcFailure::invalid_creds())?,
             ProcedureReply::Success(identity) => {
-                return Ok(identity);
-            }
+                return Ok(identity)
+            },
             ProcedureReply::Challenge(challenge) => {
-                let secure = Secure {
-                    challenge: challenge.into(),
-                };
+                let secure = Secure { challenge: challenge.into() };
                 let method = AMQPMethod::Secure(secure);
                 let class = AMQPClass::Connection(method);
                 let frame = AMQPFrame::Method(CTL_CHANNEL_ID, class);
@@ -131,17 +122,16 @@ where
                             secure_ok.get_amqp_class_id(),
                             secure_ok.get_amqp_method_id(),
                         )?;
-                        response = secure_ok.response.as_str().to_owned();
-                        continue;
-                    }
-                    unexpected => {
+                        response = secure_ok.response.to_string();
+                        continue
+                    },
+                    unexpected =>
                         return Err(HandshakeError::UnexpectedFrame {
                             expected: "Method.Connection/Secure-Ok",
                             props: From::from(&unexpected),
-                        })
-                    }
+                        }),
                 }
-            }
+            },
         }
     }
 

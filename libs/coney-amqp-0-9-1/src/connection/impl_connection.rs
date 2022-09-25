@@ -22,9 +22,8 @@ where
 {
     pub async fn run(mut self) -> Result<(), ConnectionError> {
         let conn_props = match handshake::run(&mut self.framing, self.backend.as_ref()).await {
-            Err(handshake_error) => {
-                return process_handshake_error(&mut self.framing, handshake_error).await
-            }
+            Err(handshake_error) =>
+                return process_handshake_error(&mut self.framing, handshake_error).await,
             Ok(state) => state,
         };
 

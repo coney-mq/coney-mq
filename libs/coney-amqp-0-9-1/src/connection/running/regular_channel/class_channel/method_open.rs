@@ -20,7 +20,7 @@ impl Handler<Open, ConnContext, LoopControl> for RegularChannel {
                 let () = context.send_frame(open_ok).await?;
 
                 Ok(LoopControl::Continue)
-            }
+            },
             _ => Err(AmqpException::new(format!(
                 "Unexpected attempt to open channel#{}: {:?}",
                 self.id, query

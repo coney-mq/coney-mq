@@ -1,6 +1,5 @@
 use ::amq_protocol::frame::AMQPFrame;
-use ::futures::stream::SplitSink;
-use ::futures::stream::SplitStream;
+use ::futures::stream::{SplitSink, SplitStream};
 use ::tokio_util::codec::Framed;
 
 mod amqp_frame_props;
@@ -11,8 +10,7 @@ pub use io_stream::IoStream;
 
 pub mod codec;
 use codec::AmqpFrameCodec;
-pub use codec::DecodeFailure;
-pub use codec::EncodeFailure;
+pub use codec::{DecodeFailure, EncodeFailure};
 
 mod impl_amqp_framing;
 

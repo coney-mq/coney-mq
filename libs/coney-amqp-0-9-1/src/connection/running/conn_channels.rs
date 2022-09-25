@@ -7,10 +7,7 @@ pub(super) struct ConnChannels {
 }
 impl ConnChannels {
     pub fn new(control_channel: ControlChannel, regular_channels: Vec<RegularChannel>) -> Self {
-        Self {
-            control_channel,
-            regular_channels,
-        }
+        Self { control_channel, regular_channels }
     }
 
     pub fn control_mut(&mut self) -> &mut ControlChannel {
@@ -23,13 +20,9 @@ impl ConnChannels {
             )
             .with_condition(Condition::InternalError))?
         }
-        self.regular_channels
-            .get_mut(chan_id as usize - 1)
-            .ok_or_else(|| {
-                AmqpException::new(
-                    "Attempted to access the channel beyond the quantity of channels",
-                )
+        self.regular_channels.get_mut(chan_id as usize - 1).ok_or_else(|| {
+            AmqpException::new("Attempted to access the channel beyond the quantity of channels")
                 .with_condition(Condition::ChannelError)
-            })
+        })
     }
 }

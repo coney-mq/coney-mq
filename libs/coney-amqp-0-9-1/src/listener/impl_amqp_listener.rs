@@ -20,15 +20,8 @@ where
         ::futures::pin_mut!(sink);
 
         loop {
-            let conn = accept
-                .accept()
-                .await
-                .map_err(Into::into)
-                .map_err(AcceptorError::Accept)?;
-            let () = sink
-                .send(conn)
-                .await
-                .map_err(|_| AcceptorError::SinkSendError)?;
+            let conn = accept.accept().await.map_err(Into::into).map_err(AcceptorError::Accept)?;
+            let () = sink.send(conn).await.map_err(|_| AcceptorError::SinkSendError)?;
         }
     }
 }
